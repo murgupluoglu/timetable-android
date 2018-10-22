@@ -17,7 +17,7 @@ class MainActivity : AppCompatActivity() {
         for (i in 0..0) {
             val part = TimeTable.TimePart()
             part.startTime = TimeUnit.MINUTES.toSeconds(36).toInt()
-            part.endTime = part.startTime + TimeUnit.MINUTES.toSeconds(100).toInt()
+            part.endTime = part.startTime + TimeUnit.MINUTES.toSeconds(24).toInt()
             part.centerImageName = "ic_android_24dp"
             list.add(part)
         }
