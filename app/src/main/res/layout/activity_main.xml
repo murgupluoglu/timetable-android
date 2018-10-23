@@ -18,12 +18,12 @@
         <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="TimeRuleView:"
-                android:textStyle="bold" />
+                android:text="Time Table:"
+                android:textStyle="bold"/>
 
     </RelativeLayout>
 
-    <com.murgupluoglu.timetable.TimeTable
+    <com.murgupluoglu.timetable.TimeTableView
             android:id="@+id/timeTable"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -32,6 +32,5 @@
             app:seperatorTextColor="#ffffff"
             app:indicatorTriangleSideLen="0dp"
             app:seperatorWidth="1dp"/>
-
 
 </LinearLayout>

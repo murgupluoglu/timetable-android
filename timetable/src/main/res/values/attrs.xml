@@ -6,7 +6,7 @@
     <attr name="indicatorLineColor" format="reference|color" />
     <attr name="indicatorLineWidth" format="reference|dimension" />
 
-    <declare-styleable name="TimeTable">
+    <declare-styleable name="TimeTableView">
         <attr name="backgroundColor" format="reference|color" />
         <attr name="seperatorColor" />
         <attr name="partHeight" format="dimension|reference" />
