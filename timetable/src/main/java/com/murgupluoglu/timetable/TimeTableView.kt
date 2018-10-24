@@ -38,9 +38,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     private var partColor: Int = 0
 
-    private var gradationWidth: Float = 0.toFloat()
-
-
+    private var seperatorWidth: Float = 0f
     private var seperatorTextColor: Int = 0
     private var seperatorTextSize: Float = 0f
     private var seperatorTextGap: Float = 0f
@@ -72,7 +70,8 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     private var mCurrentDistance: Float = 0f
 
 
-    private var mPaint: Paint? = null
+    lateinit var mPaint: Paint
+    lateinit var mHandlePaint: Paint
     private var mTextPaint: TextPaint? = null
     private var mTrianglePath: Path? = null
     private var mScroller: Scroller? = null
@@ -137,7 +136,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         seperatorColor = ta.getColor(R.styleable.TimeTableView_seperatorColor, Color.GRAY)
         partHeight = ta.getDimension(R.styleable.TimeTableView_partHeight, dp2px(20f).toFloat())
         partColor = ta.getColor(R.styleable.TimeTableView_partColor, Color.parseColor("#8F2CFA"))
-        gradationWidth = ta.getDimension(R.styleable.TimeTableView_seperatorWidth, 1f)
+        seperatorWidth = ta.getDimension(R.styleable.TimeTableView_seperatorWidth, 1f)
         seperatorTextColor = ta.getColor(R.styleable.TimeTableView_seperatorTextColor, Color.GRAY)
         seperatorTextSize = ta.getDimension(R.styleable.TimeTableView_seperatorTextSize, sp2px(12f).toFloat())
         seperatorTextGap = ta.getDimension(R.styleable.TimeTableView_seperatorTextGap, dp2px(2f).toFloat())
@@ -154,6 +153,12 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     private fun init(context: Context) {
         mPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+        mPaint.color = seperatorColor
+        mPaint.strokeWidth = seperatorWidth
+
+        mHandlePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+        mHandlePaint.color = Color.WHITE
+        mHandlePaint.strokeWidth = dp2px(4f).toFloat()
 
         mTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
         mTextPaint!!.textSize = seperatorTextSize
@@ -249,7 +254,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
                     }
                     mCurrentDistance -= dx.toFloat()
                 }else{
-                    val dx = (x - mInitialX)
+                    val dx = x - mInitialX
                     val currentTimeDiff = (dx / oneMinToPixel  * secondToMin).toInt()
                     logD("dx %s currentTimeDiff %s mInitialStartMin %s mInitialEndMin %s", dx, currentTimeDiff, mInitialStartSec, mInitialEndSec)
                     setDifferenceToTimePart(currentTimeDiff)
@@ -326,15 +331,15 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     private fun drawRule(canvas: Canvas) {
 
-        mPaint!!.color = seperatorColor
-        mPaint!!.strokeWidth = gradationWidth
+        mPaint.color = seperatorColor
+        mPaint.strokeWidth = seperatorWidth
 
         var start = 0
         var offset = 0 - mCurrentDistance
         while (start <= MAX_TIME_VALUE) {
 
-            if (start % 3600 == 0) {
-                canvas.drawLine(offset, 0f, offset, mHeight.toFloat(), mPaint!!)
+            if (start % 3600 == 0) { // 1 hour
+                canvas.drawLine(offset, 0f, offset, mHeight.toFloat(), mPaint)
 
                 val text = formatTimeHHmm(start)
                 canvas.drawText(text, offset + 15, partHeight, mTextPaint!!)
@@ -359,7 +364,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     private fun calculateTimePartEnd(endTime : Int) : Int{
         val secondGap = oneMinToPixel / secondToMin
-        return (0 - mCurrentDistance +endTime * secondGap).toInt()
+        return (0 - mCurrentDistance + endTime * secondGap).toInt()
     }
 
 
@@ -368,8 +373,8 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
             return
         }
 
-        mPaint!!.strokeWidth = mHeight.toFloat()
-        mPaint!!.color = partColor
+        mPaint.strokeWidth = mHeight.toFloat()
+        mPaint.color = partColor
         val yPosition = mHeight / 2
         var start: Int
         var end: Int
@@ -380,7 +385,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
             //draw timepart background
             start = calculateTimePartStart(timePart.startTimeSec)
             end = calculateTimePartEnd(timePart.endTimeSec)
-            canvas.drawLine(start.toFloat(), yPosition.toFloat(), end.toFloat(), yPosition.toFloat(), mPaint!!)
+            canvas.drawLine(start.toFloat(), yPosition.toFloat(), end.toFloat(), yPosition.toFloat(), mPaint)
 
             //draw left top start time
             val textStart = formatTimeHHmm(timePart.startTimeSec)
@@ -403,6 +408,15 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
             val yStart = mHeight / 2 - centerImageSize / 2
             drawable!!.setBounds(xStart, yStart, xStart + centerImageSize, yStart + centerImageSize)
             drawable.draw(canvas)
+
+            //draw left handle
+            val xHandleLeft = start.toFloat() + textStartMargin
+            val heightHandle = ((mHeight / 2) - mHeight / 8).toFloat()
+            canvas.drawLine(xHandleLeft, heightHandle, xHandleLeft, heightHandle + mHeight / 4, mHandlePaint)
+
+            //draw right handle
+            val xHandleRight = end.toFloat() - textStartMargin
+            canvas.drawLine(xHandleRight, heightHandle, xHandleRight, heightHandle + mHeight / 4, mHandlePaint)
         }
     }
 
