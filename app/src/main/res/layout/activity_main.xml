@@ -1,36 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
-              xmlns:tools="http://schemas.android.com/tools"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:orientation="vertical"
-              tools:context=".MainActivity">
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-    <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="4dp"
-            android:layout_marginTop="20dp"
-            android:padding="8dp"
-            android:orientation="horizontal">
-
-        <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Time Table:"
-                android:textStyle="bold"/>
-
-    </RelativeLayout>
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
+        android:text="Time Table:"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <com.murgupluoglu.timetable.TimeTableView
-            android:id="@+id/timeTable"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:backgroundColor="#083E50"
-            app:seperatorColor="#063443"
-            app:seperatorTextColor="#ffffff"
-            app:indicatorTriangleSideLen="0dp"
-            app:seperatorWidth="1dp"/>
+        android:id="@+id/timeTable"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        app:backgroundColor="#083E50"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView"
+        app:seperatorColor="#063443"
+        app:seperatorTextColor="#ffffff"
+        app:seperatorWidth="1dp" />
 
-</LinearLayout>
+</android.support.constraint.ConstraintLayout>

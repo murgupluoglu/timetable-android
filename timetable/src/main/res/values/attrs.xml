@@ -18,7 +18,6 @@
         <attr name="currentTime" format="integer|reference" />
         <attr name="indicatorLineColor" />
         <attr name="indicatorLineWidth" />
-        <attr name="indicatorTriangleSideLen" format="dimension|reference" />
     </declare-styleable>
 
 </resources>
