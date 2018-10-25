@@ -267,6 +267,8 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
             MotionEvent.ACTION_UP -> {
                 logD("ACTION_UP")
                 timePartClickedPart = TimePartParts.NOT_CLICKED
+                sortList()
+                invalidate()
             }
         }
 
@@ -339,7 +341,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     }
 
     override fun computeScroll() {
-        logD("computeScroll")
+        //logD("computeScroll")
         if (!isMoving && scroller!!.computeScrollOffset()) {
             currentPositionPixel = scroller!!.currX.toFloat()
             computeTime()
@@ -382,11 +384,10 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
         timePartList.forEachIndexed { index, timePart ->
 
-            logD("currentPositionPixel $currentPositionPixel")
             //draw timepart background
             start = secondToPixel(timePart.startTimeSec) - currentPositionPixel
             end = secondToPixel(timePart.endTimeSec) - currentPositionPixel
-            canvas.drawLine(start, yPosition.toFloat(), end, yPosition.toFloat(), paint)
+            canvas.drawLine(start - (onePixelSec * 30), yPosition.toFloat(), end + (onePixelSec * 30), yPosition.toFloat(), paint)
 
             //draw left top start time
             val textStart = formatTimeHHmm(timePart.startTimeSec)
@@ -458,6 +459,10 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     }
 
     private fun sortList() {
+        timePartList.forEach { //rounding seconds for perfect fit
+            it.startTimeSec = ((Math.round(((it.startTimeSec / 60).toDouble())) * 60).toInt())
+            it.endTimeSec = ((Math.round(((it.endTimeSec / 60).toDouble())) * 60).toInt())
+        }
         timePartList.sortWith(Comparator { p0, p1 ->
             Integer.valueOf(p0.startTimeSec).compareTo(p1.startTimeSec)
         })
