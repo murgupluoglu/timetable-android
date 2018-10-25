@@ -13,14 +13,30 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val list = ArrayList<TimeTableView.TimePart>()
-        for (i in 0..0) {
+        timeTable.timeTableListener = object : TimeTableView.TimeTableListener{
+            override fun initialized() {
+
+                val part = TimeTableView.TimePart()
+                part.startTimeSec = TimeUnit.MINUTES.toSeconds(36).toInt()
+                part.endTimeSec = part.startTimeSec + TimeUnit.MINUTES.toSeconds(24).toInt()
+                part.centerImageName = "ic_android_24dp"
+
+                timeTable.addTimePart(part)
+                //timeTable.setCurrentTime(TimeUnit.HOURS.toSeconds(3).toInt())
+            }
+
+            override fun onTimeChanged(newTimeValue: Int) {
+
+            }
+        }
+
+        buttonAddTimePart.setOnClickListener {
             val part = TimeTableView.TimePart()
-            part.startTimeSec = TimeUnit.MINUTES.toSeconds(36).toInt()
+            part.startTimeSec = TimeUnit.MINUTES.toSeconds(61).toInt()
             part.endTimeSec = part.startTimeSec + TimeUnit.MINUTES.toSeconds(24).toInt()
             part.centerImageName = "ic_android_24dp"
-            list.add(part)
+
+            timeTable.addTimePart(part)
         }
-        timeTable.setTimePartList(list)
     }
 }
