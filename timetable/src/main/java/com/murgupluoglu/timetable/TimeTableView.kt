@@ -64,6 +64,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
 
     private var isScrolling = false
+    private var isMoving = false
     private var currentPositionPixel: Float = 0f //Distance between current time and 00:00
 
 
@@ -116,7 +117,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     private val gestureDetector: GestureDetector = GestureDetector(context, object : SimpleOnGestureListener() {
 
         override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
-            //logD("onScroll distanceX:$distanceX")
+            //logD("onScroll distanceX:$distanceX")8
 
 
 
@@ -124,8 +125,8 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
             when(timePartClickedPart){
                 TimePartParts.CENTER -> {
                     if(!isScrolling){
-                        val differenceSec = pixelToSec(distanceX).toInt()
-                        moveTimePart(-differenceSec)
+                        isMoving = true
+                        moveTimePart(distanceX)
                     }else{
                         isScrolling = true
                         currentPositionPixel += distanceX
@@ -133,8 +134,8 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
                 }
                 TimePartParts.LEFT_HANDLE, TimePartParts.RIGHT_HANDLE -> {
                     //Move time-part
-                    val differenceSec = pixelToSec(distanceX).toInt()
-                    moveTimePart(-differenceSec)
+                    isMoving = true
+                    moveTimePart(distanceX)
                 }
                 else->{
                     isScrolling = true
@@ -147,10 +148,12 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         }
 
         override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float): Boolean {
-            logD("onFling")
-            isScrolling = true
-            mScroller!!.fling(currentPositionPixel.toInt(), 0, (-velocityX).toInt(), 0, 0, MAX_TIME_VALUE, 0, 0)
-            computeTime()
+            logD("onFling isMoving:$isMoving")
+            if(!isMoving){
+                isScrolling = true
+                mScroller!!.fling(currentPositionPixel.toInt(), 0, (-velocityX).toInt(), 0, 0, MAX_TIME_VALUE, 0, 0)
+                computeTime()
+            }
             return super.onFling(e1, e2, velocityX, velocityY)
         }
     })
@@ -267,6 +270,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     override fun onTouchEvent(event: MotionEvent): Boolean {
 
         isScrolling = false
+        isMoving = false
         mScroller!!.abortAnimation()
 
         restStatusByAction(event)
@@ -274,7 +278,8 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         return true
     }
 
-    private fun moveTimePart(differenceSec: Int) {
+    private fun moveTimePart(distanceX: Float) {
+        val differenceSec = -pixelToSec(distanceX).toInt()
         val timePart = mTimePartList[clickedTimePartIndex]
         val diffStart = timePart.startTimeSec + differenceSec
         val diffEnd = timePart.endTimeSec + differenceSec
@@ -329,7 +334,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     override fun computeScroll() {
         logD("computeScroll")
-        if (mScroller!!.computeScrollOffset()) {
+        if (!isMoving && mScroller!!.computeScrollOffset()) {
             currentPositionPixel = mScroller!!.currX.toFloat()
             computeTime()
         }
