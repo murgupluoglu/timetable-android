@@ -22,7 +22,7 @@ import java.util.*
  * Date 22/10/2018
  */
 class TimeTableView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
-    View(context, attrs, defStyleAttr) {
+        View(context, attrs, defStyleAttr) {
 
     private var isInitialized = false
     private val LOG_ENABLE = BuildConfig.DEBUG
@@ -41,7 +41,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     private var partHeight: Float = 0f
     private var partColor: Int = 0
 
-    private var timePartMinWidth : Int = 24 * 60 //when you resize any time-part cannot be smaller than this number 24min * 60sec = 1440sec
+    private var timePartMinWidth: Int = 24 * 60 //when you resize any time-part cannot be smaller than this number 24min * 60sec = 1440sec
 
     //Handles
     lateinit var handlesPaint: Paint
@@ -219,17 +219,17 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
         setMeasuredDimension(widthView, heightView)
 
-        if(!isInitialized){
+        if (!isInitialized) {
             isInitialized = true
             timeTableListener?.initialized()
         }
     }
 
-    private fun pixelToSec(pixel : Float) : Float{
+    private fun pixelToSec(pixel: Float): Float {
         return pixel / onePixelSec
     }
 
-    private fun secondToPixel(second : Int): Float {
+    private fun secondToPixel(second: Int): Float {
         return second * onePixelSec
     }
 
@@ -395,10 +395,10 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
             //draw right bottom end time
             val textEnd = formatTimeHHmm(timePart.endTimeSec)
             canvas.drawText(
-                textEnd,
-                end - textHalfWidth * 2 - textStartMargin,
-                heightView - partHeight / 2,
-                textPaint!!
+                    textEnd,
+                    end - textHalfWidth * 2 - textStartMargin,
+                    heightView - partHeight / 2,
+                    textPaint!!
             )
 
 
@@ -438,16 +438,16 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     fun addTimePart(timePart: TimePart) {
         var isPossible = true
         timePartList.forEach {
-            if(timePart.startTimeSec in it.startTimeSec..it.endTimeSec
-                || timePart.endTimeSec in it.startTimeSec..it.endTimeSec){
+            if (timePart.startTimeSec in it.startTimeSec..it.endTimeSec
+                    || timePart.endTimeSec in it.startTimeSec..it.endTimeSec) {
                 isPossible = false
             }
         }
 
-        if(isPossible){
+        if (isPossible) {
             timePartList.add(timePart)
             sortList()
-        }else{
+        } else {
             Toast.makeText(context, "NOT_POSSIBLE", Toast.LENGTH_SHORT).show()
         }
 
@@ -457,7 +457,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         postInvalidate()
     }
 
-    private fun sortList(){
+    private fun sortList() {
         timePartList.sortWith(Comparator { p0, p1 ->
             Integer.valueOf(p0.startTimeSec).compareTo(p1.startTimeSec)
         })
