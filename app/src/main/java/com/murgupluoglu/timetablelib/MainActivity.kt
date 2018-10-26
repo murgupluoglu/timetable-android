@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
                 part.centerImageName = "ic_android_24dp"
 
                 timeTable.addTimePart(part)
-                timeTable.setCurrentTime(TimeUnit.HOURS.toMinutes(3).toInt())
+                //timeTable.setCurrentTime(TimeUnit.HOURS.toMinutes(3).toInt())
             }
 
             override fun onTimeChanged(newTimeValue: Int) {

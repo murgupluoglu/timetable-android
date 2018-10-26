@@ -25,6 +25,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         View(context, attrs, defStyleAttr) {
 
     private var isInitialized = false
+    private var startClickTime = 0L
     private val LOG_ENABLE = BuildConfig.DEBUG
 
     private val textStartMargin = dp2px(2f)
@@ -117,36 +118,69 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     private val gestureDetector: GestureDetector = GestureDetector(context, object : SimpleOnGestureListener() {
 
-        override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
-            logD("onScroll timePartClickedPart:$timePartClickedPart diff ${(e2.x - e1.x).toInt()}")
+        override fun onDown(e: MotionEvent): Boolean {
+            logD("onDown ${e.x.toInt()}")
 
+            val xPos = e.x.toInt()
+
+            scroller.abortAnimation()
+
+            timePartList.forEachIndexed { index, timePart ->
+                val start = minuteToPixel(timePart.startTimeMin) - currentPositionPixel
+                val end = minuteToPixel(timePart.endTimeMin) - currentPositionPixel
+                when (xPos) {
+                    in (start + handlesTouchAreaWidth)..(end - handlesTouchAreaWidth) -> {
+                        timePartClickedPart = TimePartParts.CENTER
+                        startClickTime = System.currentTimeMillis()
+                        logD("Clicked Center")
+                        //Toast.makeText(context, "Clicked Center", Toast.LENGTH_SHORT).show()
+                    }
+                    in (start)..(start + handlesTouchAreaWidth) -> {
+                        timePartClickedPart = TimePartParts.LEFT_HANDLE
+                        logD("Clicked LeftHandle")
+                        Toast.makeText(context, "Clicked LeftHandle", Toast.LENGTH_SHORT).show()
+                    }
+                    in (end - handlesTouchAreaWidth)..(end) -> {
+                        timePartClickedPart = TimePartParts.RIGHT_HANDLE
+                        logD("Clicked RightHandle")
+                        Toast.makeText(context, "Clicked RightHandle", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                if (xPos in (start)..(end)) {
+                    clickedTimePartIndex = index
+                }
+            }
+
+
+            return super.onDown(e)
+        }
+
+        override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
+            logD("onScroll timePartClickedPart:$timePartClickedPart")
 
             //Scroll view for dragging
-            if(timePartClickedPart != TimePartParts.NOT_CLICKED){
-                moveTimePart((distanceX.toInt()))
+            when (timePartClickedPart) {
+                TimePartParts.CENTER -> {
+                    val clickDuration = System.currentTimeMillis() - startClickTime > 200
+                    logD("clickDuration $clickDuration isScrolling $isScrolling")
+                    if (clickDuration && !isScrolling) {
+                        moveTimePart((distanceX.toInt()))
+                    } else {
+                        isScrolling = true
+                        currentPositionPixel += distanceX.toInt()
+                    }
+                }
+                TimePartParts.LEFT_HANDLE, TimePartParts.RIGHT_HANDLE -> {
+                    //Move time-part
+                    moveTimePart((distanceX.toInt()))
+                }
+                else -> {
+                    isScrolling = true
+                    currentPositionPixel += distanceX.toInt()
+                }
             }
-//            when (timePartClickedPart) {
-//                TimePartParts.CENTER -> {
-//                    if (!isScrolling) {
-//                        isMoving = true
-//                        moveTimePart((distanceX.toInt()))
-//                    } else {
-//                        isScrolling = true
-//                        currentPositionPixel += distanceX.toInt()
-//                    }
-//                }
-//                TimePartParts.LEFT_HANDLE, TimePartParts.RIGHT_HANDLE -> {
-//                    //Move time-part
-//                    isMoving = true
-//                    moveTimePart((distanceX.toInt()))
-//                }
-//                else -> {
-//                    isScrolling = true
-//                    currentPositionPixel += distanceX.toInt()
-//                }
-//            }
-
             computeTime()
+
             return true
         }
 
@@ -235,44 +269,19 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         return min * pixelPerMininute
     }
 
+    //private var initX : Float = 0f
     private fun restStatusByAction(event: MotionEvent) {
         val action = event.action and MotionEvent.ACTION_MASK
-        val x = event.x.toInt()
+        //val xPos = event.x
         when (action) {
             MotionEvent.ACTION_DOWN -> {
-
-                timePartList.forEachIndexed { index, timePart ->
-                    val start = minuteToPixel(timePart.startTimeMin) - currentPositionPixel
-                    val end = minuteToPixel(timePart.endTimeMin) - currentPositionPixel
-                    when (x) {
-                        in (start + handlesTouchAreaWidth)..(end - handlesTouchAreaWidth) -> {
-                            timePartClickedPart = TimePartParts.CENTER
-                            logD("Clicked Center")
-                            Toast.makeText(context, "Clicked Center", Toast.LENGTH_SHORT).show()
-                        }
-                        in (start)..(start + handlesTouchAreaWidth) -> {
-                            timePartClickedPart = TimePartParts.LEFT_HANDLE
-                            logD("Clicked LeftHandle")
-                            Toast.makeText(context, "Clicked LeftHandle", Toast.LENGTH_SHORT).show()
-                        }
-                        in (end - handlesTouchAreaWidth)..(end) -> {
-                            timePartClickedPart = TimePartParts.RIGHT_HANDLE
-                            logD("Clicked RightHandle")
-                            Toast.makeText(context, "Clicked RightHandle", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    if (x in (start)..(end)) {
-                        clickedTimePartIndex = index
-                    }
-                }
+                //initX = xPos
             }
             MotionEvent.ACTION_UP -> {
                 logD("ACTION_UP")
                 timePartClickedPart = TimePartParts.NOT_CLICKED
                 isScrolling = false
                 isMoving = false
-                sortList()
-                invalidate()
             }
         }
 
@@ -280,9 +289,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        logD("onTouchEvent")
-
-        //scroller.abortAnimation()
+        logD("onTouchEvent $event")
 
         gestureDetector.onTouchEvent(event)
         restStatusByAction(event)
@@ -303,7 +310,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         val diffStart = timePart.startTimeMin - value
         val diffEnd = timePart.endTimeMin - value
 
-        logD("DIFF_START____ $diffStart value: $value")
+        //logD("DIFF_START____ $diffStart value: $value")
 
         var isPossible = true
         //check left and right time-parts if exist
@@ -312,7 +319,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         if(timePartClickedPart == TimePartParts.CENTER || timePartClickedPart == TimePartParts.LEFT_HANDLE){
             if(prevIndex >= 0){
                 val prevTimePart = timePartList[prevIndex]
-                if(prevTimePart.endTimeMin > diffStart){//left side time-part end-value must be smaller than our start-value
+                if(prevTimePart.endTimeMin > diffStart){ //left side time-part end-value must be smaller than our start-value
                     isPossible = false
                 }
             }
@@ -326,7 +333,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
             }
         }
 
-        logD("isPossible $isPossible")
+        //logD("isPossible $isPossible")
         if(!isPossible) return
         when (timePartClickedPart) {
             TimePartParts.CENTER -> {
@@ -420,7 +427,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
             //draw timepart background
             start = minuteToPixel(timePart.startTimeMin) - currentPositionPixel
-            logD("START__ ${minuteToPixel(timePart.startTimeMin)} currentPositionPixel $currentPositionPixel")
+            //logD("START__ ${minuteToPixel(timePart.startTimeMin)} currentPositionPixel $currentPositionPixel")
             end = minuteToPixel(timePart.endTimeMin) - currentPositionPixel
             canvas.drawLine((start - (pixelPerMininute /2)).toFloat(), yPosition.toFloat(), (end + (pixelPerMininute / 2)).toFloat(), yPosition.toFloat(), paint)
 
