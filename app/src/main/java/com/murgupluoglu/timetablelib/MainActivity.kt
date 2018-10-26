@@ -4,7 +4,6 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import com.murgupluoglu.timetable.TimeTableView
 import kotlinx.android.synthetic.main.activity_main.*
-import java.util.ArrayList
 import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
@@ -17,12 +16,12 @@ class MainActivity : AppCompatActivity() {
             override fun initialized() {
 
                 val part = TimeTableView.TimePart()
-                part.startTimeSec = TimeUnit.MINUTES.toSeconds(36).toInt()
-                part.endTimeSec = part.startTimeSec + TimeUnit.MINUTES.toSeconds(24).toInt()
+                part.startTimeMin = 0
+                part.endTimeMin = part.startTimeMin + 24
                 part.centerImageName = "ic_android_24dp"
 
                 timeTable.addTimePart(part)
-                //timeTable.setCurrentTime(TimeUnit.HOURS.toSeconds(3).toInt())
+                timeTable.setCurrentTime(TimeUnit.HOURS.toMinutes(3).toInt())
             }
 
             override fun onTimeChanged(newTimeValue: Int) {
@@ -32,8 +31,8 @@ class MainActivity : AppCompatActivity() {
 
         buttonAddTimePart.setOnClickListener {
             val part = TimeTableView.TimePart()
-            part.startTimeSec = TimeUnit.MINUTES.toSeconds(61).toInt()
-            part.endTimeSec = part.startTimeSec + TimeUnit.MINUTES.toSeconds(24).toInt()
+            part.startTimeMin = 60
+            part.endTimeMin = part.startTimeMin + 24
             part.centerImageName = "ic_android_24dp"
 
             timeTable.addTimePart(part)

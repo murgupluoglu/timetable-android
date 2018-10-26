@@ -33,7 +33,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
 
     @IntRange(from = 0, to = MAX_TIME_VALUE.toLong())
-    private var currentTimeSec: Int = 0
+    private var currentTimeMin: Int = 0
 
     private var backgroundcolor: Int = 0
 
@@ -41,7 +41,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     private var partHeight: Float = 0f
     private var partColor: Int = 0
 
-    private var timePartMinWidth: Int = 24 * 60 //when you resize any time-part cannot be smaller than this number 24min * 60sec = 1440sec
+    private var timePartMinWidth: Int = 24 //when you resize any time-part cannot be smaller than this number 24min
 
     //Handles
     lateinit var handlesPaint: Paint
@@ -58,17 +58,16 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     private var indicatorColor: Int = 0
     private var indicatorWidth: Float = 0.toFloat()
 
-    private var onePixelMin = 0f
-    private var onePixelSec = 0f
-    private var secondToMin = 60
+    private var pixelPerMininute : Int = 0
 
+    private var maxTimePixel = 0
     private var isScrolling = false
     private var isMoving = false
-    private var currentPositionPixel: Float = 0f //Distance between current time and 00:00
+    private var currentPositionPixel: Int = 0 //Distance between current time and 00:00
 
     lateinit var paint: Paint
     private var textPaint: TextPaint? = null
-    private var scroller: Scroller? = null
+    lateinit var scroller: Scroller
 
     private var widthView: Int = 0
     private var heightView: Int = 0
@@ -95,16 +94,16 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     class TimePart {
         /**
-         * Second, range of values [0, 86399]
-         * 0       —— 00:00:00
-         * 86399   —— 23:59:59
+         * Second, range of values [0, 1439]
+         * 0       —— 00:00
+         * 1439   —— 23:59
          */
-        var startTimeSec: Int = 0
+        var startTimeMin: Int = 0
 
         /**
          * End time must be greater than [.startTime]
          */
-        var endTimeSec: Int = 0
+        var endTimeMin: Int = 0
 
         /**
          * Center image 24x24
@@ -112,37 +111,40 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         var centerImageName: String? = null
 
         override fun toString(): String {
-            return "start $startTimeSec \n end $endTimeSec \n image $centerImageName"
+            return "start $startTimeMin \n end $endTimeMin \n image $centerImageName"
         }
     }
 
     private val gestureDetector: GestureDetector = GestureDetector(context, object : SimpleOnGestureListener() {
 
         override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
-            //logD("onScroll distanceX:$distanceX")8
+            logD("onScroll timePartClickedPart:$timePartClickedPart diff ${(e2.x - e1.x).toInt()}")
 
 
             //Scroll view for dragging
-            when (timePartClickedPart) {
-                TimePartParts.CENTER -> {
-                    if (!isScrolling) {
-                        isMoving = true
-                        moveTimePart(distanceX)
-                    } else {
-                        isScrolling = true
-                        currentPositionPixel += distanceX
-                    }
-                }
-                TimePartParts.LEFT_HANDLE, TimePartParts.RIGHT_HANDLE -> {
-                    //Move time-part
-                    isMoving = true
-                    moveTimePart(distanceX)
-                }
-                else -> {
-                    isScrolling = true
-                    currentPositionPixel += distanceX
-                }
+            if(timePartClickedPart != TimePartParts.NOT_CLICKED){
+                moveTimePart((distanceX.toInt()))
             }
+//            when (timePartClickedPart) {
+//                TimePartParts.CENTER -> {
+//                    if (!isScrolling) {
+//                        isMoving = true
+//                        moveTimePart((distanceX.toInt()))
+//                    } else {
+//                        isScrolling = true
+//                        currentPositionPixel += distanceX.toInt()
+//                    }
+//                }
+//                TimePartParts.LEFT_HANDLE, TimePartParts.RIGHT_HANDLE -> {
+//                    //Move time-part
+//                    isMoving = true
+//                    moveTimePart((distanceX.toInt()))
+//                }
+//                else -> {
+//                    isScrolling = true
+//                    currentPositionPixel += distanceX.toInt()
+//                }
+//            }
 
             computeTime()
             return true
@@ -152,7 +154,8 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
             logD("onFling isMoving:$isMoving")
             if (!isMoving) {
                 isScrolling = true
-                scroller!!.fling(currentPositionPixel.toInt(), 0, (-velocityX).toInt(), 0, 0, MAX_TIME_VALUE, 0, 0)
+                scroller.forceFinished(true)
+                scroller.fling(currentPositionPixel, 0, (-velocityX).toInt(), 0, 0, maxTimePixel, 0, 0)
                 computeTime()
             }
             return super.onFling(e1, e2, velocityX, velocityY)
@@ -167,7 +170,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
         textHalfWidth = textPaint!!.measureText("00:00") * .5f
 
-        currentPositionPixel = secondToPixel(currentTimeSec)
+        currentPositionPixel = minuteToPixel(currentTimeMin)
     }
 
     private fun initAttrs(context: Context, attrs: AttributeSet?) {
@@ -180,7 +183,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         seperatorTextColor = ta.getColor(R.styleable.TimeTableView_seperatorTextColor, Color.GRAY)
         seperatorTextSize = ta.getDimension(R.styleable.TimeTableView_seperatorTextSize, sp2px(12f).toFloat())
         seperatorTextGap = ta.getDimension(R.styleable.TimeTableView_seperatorTextGap, dp2px(2f).toFloat())
-        currentTimeSec = ta.getInt(R.styleable.TimeTableView_currentTime, 0)
+        currentTimeMin = ta.getInt(R.styleable.TimeTableView_currentTime, 0)
         indicatorWidth = ta.getDimension(R.styleable.TimeTableView_indicatorLineWidth, dp2px(1f).toFloat())
         indicatorColor = ta.getColor(R.styleable.TimeTableView_indicatorLineColor, Color.RED)
         ta.recycle()
@@ -201,7 +204,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
         scroller = Scroller(context)
 
-        currentPositionPixel = secondToPixel(currentTimeSec)
+        currentPositionPixel = minuteToPixel(currentTimeMin)
         invalidate()
     }
 
@@ -209,9 +212,8 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         widthView = View.MeasureSpec.getSize(widthMeasureSpec)
         heightView = View.MeasureSpec.getSize(heightMeasureSpec)
 
-        secondToMin = 60
-        onePixelMin = widthView / 188f // we want to fit 3hour 8min inside phone width = 188min -> width/188
-        onePixelSec = onePixelMin / secondToMin
+        pixelPerMininute = (widthView / 188f).toInt() // we want to fit 3hour 8min inside phone width = 188min -> width/188
+        maxTimePixel = minuteToPixel(MAX_TIME_VALUE) - widthView //For stop end of 23:00
 
         if (View.MeasureSpec.getMode(heightMeasureSpec) == View.MeasureSpec.AT_MOST) {
             heightView = dp2px(100f)
@@ -225,12 +227,12 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         }
     }
 
-    private fun pixelToSec(pixel: Float): Float {
-        return pixel / onePixelSec
+    private fun pixelToMin(pixel: Int): Int {
+        return pixel / pixelPerMininute
     }
 
-    private fun secondToPixel(second: Int): Float {
-        return second * onePixelSec
+    private fun minuteToPixel(min: Int): Int {
+        return min * pixelPerMininute
     }
 
     private fun restStatusByAction(event: MotionEvent) {
@@ -240,8 +242,8 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
             MotionEvent.ACTION_DOWN -> {
 
                 timePartList.forEachIndexed { index, timePart ->
-                    val start = secondToPixel(timePart.startTimeSec) - currentPositionPixel
-                    val end = secondToPixel(timePart.endTimeSec) - currentPositionPixel
+                    val start = minuteToPixel(timePart.startTimeMin) - currentPositionPixel
+                    val end = minuteToPixel(timePart.endTimeMin) - currentPositionPixel
                     when (x) {
                         in (start + handlesTouchAreaWidth)..(end - handlesTouchAreaWidth) -> {
                             timePartClickedPart = TimePartParts.CENTER
@@ -267,6 +269,8 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
             MotionEvent.ACTION_UP -> {
                 logD("ACTION_UP")
                 timePartClickedPart = TimePartParts.NOT_CLICKED
+                isScrolling = false
+                isMoving = false
                 sortList()
                 invalidate()
             }
@@ -276,57 +280,87 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        logD("onTouchEvent")
 
-        isScrolling = false
-        isMoving = false
-        scroller!!.abortAnimation()
+        //scroller.abortAnimation()
 
-        restStatusByAction(event)
         gestureDetector.onTouchEvent(event)
+        restStatusByAction(event)
         return true
     }
 
-    private fun moveTimePart(distanceX: Float) {
-        val differenceSec = -pixelToSec(distanceX).toInt()
+    private fun moveTimePart(distanceX: Int) {
+        isMoving = true
+        var value = 1
+        if(distanceX < 0){
+            value = -1
+        }
+        val differenceMin = pixelToMin(distanceX)
+        if(Math.abs(differenceMin) > 1){
+            value = differenceMin
+        }
         val timePart = timePartList[clickedTimePartIndex]
-        val diffStart = timePart.startTimeSec + differenceSec
-        val diffEnd = timePart.endTimeSec + differenceSec
-        if (true) { //checking only +1 or -1 min can change, not seconds Math.abs(differenceSec) > secondToMin
-            when (timePartClickedPart) {
-                TimePartParts.CENTER -> {
-                    if (diffStart > 0 && diffEnd < MAX_TIME_VALUE) {
-                        timePartList[clickedTimePartIndex].startTimeSec = diffStart
-                        timePartList[clickedTimePartIndex].endTimeSec = diffEnd
-                    }
-                }
-                TimePartParts.LEFT_HANDLE -> {
-                    val minWidthDiff = timePartList[clickedTimePartIndex].endTimeSec - diffStart
-                    if (diffStart > 0
-                            && minWidthDiff >= timePartMinWidth) {
-                        timePartList[clickedTimePartIndex].startTimeSec = diffStart
-                    }
-                }
-                TimePartParts.RIGHT_HANDLE -> {
-                    val minWidthDiff = diffEnd - timePartList[clickedTimePartIndex].startTimeSec
-                    if (diffEnd < MAX_TIME_VALUE
-                            && minWidthDiff >= timePartMinWidth) {
-                        timePartList[clickedTimePartIndex].endTimeSec = diffEnd
-                    }
-                }
-                else -> {
+        val diffStart = timePart.startTimeMin - value
+        val diffEnd = timePart.endTimeMin - value
 
+        logD("DIFF_START____ $diffStart value: $value")
+
+        var isPossible = true
+        //check left and right time-parts if exist
+        val prevIndex = clickedTimePartIndex - 1
+        val nextIndex = clickedTimePartIndex + 1
+        if(timePartClickedPart == TimePartParts.CENTER || timePartClickedPart == TimePartParts.LEFT_HANDLE){
+            if(prevIndex >= 0){
+                val prevTimePart = timePartList[prevIndex]
+                if(prevTimePart.endTimeMin > diffStart){//left side time-part end-value must be smaller than our start-value
+                    isPossible = false
                 }
+            }
+        }
+        if(timePartClickedPart == TimePartParts.CENTER || timePartClickedPart == TimePartParts.RIGHT_HANDLE){
+            if(nextIndex < timePartList.size){
+                val nextTimePart = timePartList[nextIndex]
+                if(diffEnd > nextTimePart.startTimeMin){
+                    isPossible = false
+                }
+            }
+        }
+
+        logD("isPossible $isPossible")
+        if(!isPossible) return
+        when (timePartClickedPart) {
+            TimePartParts.CENTER -> {
+                if (diffStart >= 0 && diffEnd < MAX_TIME_VALUE) {
+                    timePartList[clickedTimePartIndex].startTimeMin = diffStart
+                    timePartList[clickedTimePartIndex].endTimeMin = diffEnd
+                }
+            }
+            TimePartParts.LEFT_HANDLE -> {
+                val minWidthDiff = timePartList[clickedTimePartIndex].endTimeMin - diffStart
+                if (diffStart >= 0
+                        && minWidthDiff >= timePartMinWidth) {
+                    timePartList[clickedTimePartIndex].startTimeMin = diffStart
+                }
+            }
+            TimePartParts.RIGHT_HANDLE -> {
+                val minWidthDiff = diffEnd - timePartList[clickedTimePartIndex].startTimeMin
+                if (diffEnd < MAX_TIME_VALUE
+                        && minWidthDiff >= timePartMinWidth) {
+                    timePartList[clickedTimePartIndex].endTimeMin = diffEnd
+                }
+            }
+            else -> {
+
             }
         }
     }
 
     private fun computeTime() {
-        var maxDistancePixel = secondToPixel(MAX_TIME_VALUE)
-        maxDistancePixel -= widthView //For stop end of 23:00
-        currentPositionPixel = Math.min(maxDistancePixel, Math.max(0f, currentPositionPixel))
-        currentTimeSec = pixelToSec(currentPositionPixel).toInt()
+        currentPositionPixel = Math.min(maxTimePixel, Math.max(0, currentPositionPixel))
+        //logD("currentPositionPixel $currentPositionPixel maxTimePixel $maxTimePixel")
+        currentTimeMin = pixelToMin(currentPositionPixel)
         if (timeTableListener != null) {
-            timeTableListener!!.onTimeChanged(currentTimeSec)
+            timeTableListener!!.onTimeChanged(currentTimeMin)
         }
         invalidate()
     }
@@ -342,8 +376,8 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     override fun computeScroll() {
         //logD("computeScroll")
-        if (!isMoving && scroller!!.computeScrollOffset()) {
-            currentPositionPixel = scroller!!.currX.toFloat()
+        if (!isMoving && scroller.computeScrollOffset()) {
+            currentPositionPixel = scroller.currX
             computeTime()
         }
     }
@@ -355,18 +389,18 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         paint.strokeWidth = seperatorWidth
 
         var start = 0
-        var offset = 0 - currentPositionPixel
+        var offset = (0 - currentPositionPixel).toFloat()
         while (start <= MAX_TIME_VALUE) {
 
-            if (start % 3600 == 0) { // 1 hour
+            if (start % 60 == 0) { // 1 hour
                 canvas.drawLine(offset, 0f, offset, heightView.toFloat(), paint)
 
                 val text = formatTimeHHmm(start)
                 canvas.drawText(text, offset + 15, partHeight, textPaint!!)
             }
 
-            start += secondToMin
-            offset += onePixelMin
+            start += 1
+            offset += pixelPerMininute
         }
     }
 
@@ -378,23 +412,24 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         paint.strokeWidth = heightView.toFloat()
         paint.color = partColor
         val yPosition = heightView / 2
-        var start: Float
-        var end: Float
+        var start: Int
+        var end: Int
 
 
         timePartList.forEachIndexed { index, timePart ->
 
             //draw timepart background
-            start = secondToPixel(timePart.startTimeSec) - currentPositionPixel
-            end = secondToPixel(timePart.endTimeSec) - currentPositionPixel
-            canvas.drawLine(start - (onePixelSec * 30), yPosition.toFloat(), end + (onePixelSec * 30), yPosition.toFloat(), paint)
+            start = minuteToPixel(timePart.startTimeMin) - currentPositionPixel
+            logD("START__ ${minuteToPixel(timePart.startTimeMin)} currentPositionPixel $currentPositionPixel")
+            end = minuteToPixel(timePart.endTimeMin) - currentPositionPixel
+            canvas.drawLine((start - (pixelPerMininute /2)).toFloat(), yPosition.toFloat(), (end + (pixelPerMininute / 2)).toFloat(), yPosition.toFloat(), paint)
 
             //draw left top start time
-            val textStart = formatTimeHHmm(timePart.startTimeSec)
-            canvas.drawText(textStart, (start + textStartMargin), partHeight, textPaint!!)
+            val textStart = formatTimeHHmm(timePart.startTimeMin)
+            canvas.drawText(textStart, ((start + textStartMargin).toFloat()), partHeight, textPaint!!)
 
             //draw right bottom end time
-            val textEnd = formatTimeHHmm(timePart.endTimeSec)
+            val textEnd = formatTimeHHmm(timePart.endTimeMin)
             canvas.drawText(
                     textEnd,
                     end - textHalfWidth * 2 - textStartMargin,
@@ -412,12 +447,12 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
             drawable.draw(canvas)
 
             //draw left handle
-            val xHandleLeft = start + textStartMargin
+            val xHandleLeft = (start + textStartMargin + 8f)
             val heightHandle = ((heightView / 2) - heightView / 8).toFloat()
             canvas.drawLine(xHandleLeft, heightHandle, xHandleLeft, heightHandle + heightView / 4, handlesPaint)
 
             //draw right handle
-            val xHandleRight = end - textStartMargin
+            val xHandleRight = (end - textStartMargin - 8f)
             canvas.drawLine(xHandleRight, heightHandle, xHandleRight, heightHandle + heightView / 4, handlesPaint)
         }
     }
@@ -439,8 +474,8 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     fun addTimePart(timePart: TimePart) {
         var isPossible = true
         timePartList.forEach {
-            if (timePart.startTimeSec in it.startTimeSec..it.endTimeSec
-                    || timePart.endTimeSec in it.startTimeSec..it.endTimeSec) {
+            if (timePart.startTimeMin in it.startTimeMin-1..it.endTimeMin-1
+                    || timePart.endTimeMin in it.startTimeMin-1..it.endTimeMin-1) {
                 isPossible = false
             }
         }
@@ -459,29 +494,22 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     }
 
     private fun sortList() {
-        timePartList.forEach { //rounding seconds for perfect fit
-            it.startTimeSec = ((Math.round(((it.startTimeSec / 60).toDouble())) * 60).toInt())
-            it.endTimeSec = ((Math.round(((it.endTimeSec / 60).toDouble())) * 60).toInt())
-        }
         timePartList.sortWith(Comparator { p0, p1 ->
-            Integer.valueOf(p0.startTimeSec).compareTo(p1.startTimeSec)
+            Integer.valueOf(p0.startTimeMin).compareTo(p1.startTimeMin)
         })
     }
 
 
     fun setCurrentTime(@IntRange(from = 0, to = MAX_TIME_VALUE.toLong()) currentTime: Int) {
-        this.currentTimeSec = currentTime
-        currentPositionPixel = secondToPixel(currentTimeSec)
+        this.currentTimeMin = currentTime
+        currentPositionPixel = minuteToPixel(currentTimeMin)
         postInvalidate()
     }
 
-    fun formatTimeHHmm(@IntRange(from = 0, to = MAX_TIME_VALUE.toLong()) tValue: Int): String {
-        var timeValue = tValue
-        if (timeValue < 0) {
-            timeValue = 0
-        }
-        val hour = timeValue / 3600
-        val minute = timeValue % 3600 / 60
+    private fun formatTimeHHmm(@IntRange(from = 0, to = MAX_TIME_VALUE.toLong()) totalMinute: Int): String {
+
+        val hour = totalMinute / 60
+        val minute = totalMinute % 60
         val sb = StringBuilder()
         if (hour < 10) {
             sb.append('0')
@@ -491,36 +519,11 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
             sb.append('0')
         }
         sb.append(minute)
-        return sb.toString()
-    }
-
-
-    fun formatTimeHHmmss(@IntRange(from = 0, to = MAX_TIME_VALUE.toLong()) timeValue: Int): String {
-        val hour = timeValue / 3600
-        val minute = timeValue % 3600 / 60
-        val second = timeValue % 3600 % 60
-        val sb = StringBuilder()
-
-        if (hour < 10) {
-            sb.append('0')
-        }
-        sb.append(hour).append(':')
-
-        if (minute < 10) {
-            sb.append('0')
-        }
-        sb.append(minute)
-        sb.append(':')
-
-        if (second < 10) {
-            sb.append('0')
-        }
-        sb.append(second)
         return sb.toString()
     }
 
     companion object {
-        const val MAX_TIME_VALUE = 24 * 3600
+        const val MAX_TIME_VALUE = 24 * 60
     }
 
 }
