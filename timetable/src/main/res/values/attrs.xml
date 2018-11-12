@@ -9,12 +9,12 @@
     <declare-styleable name="TimeTableView">
         <attr name="backgroundColor" format="reference|color" />
         <attr name="seperatorColor" />
-        <attr name="partHeight" format="dimension|reference" />
         <attr name="partColor" format="color|reference" />
         <attr name="seperatorWidth" format="dimension|reference" />
         <attr name="seperatorTextColor" format="color|reference" />
         <attr name="seperatorTextSize" format="dimension|reference" />
-        <attr name="seperatorTextGap" format="dimension|reference" />
+        <attr name="seperatorTextTopMargin" format="dimension|reference" />
+        <attr name="seperatorTextLeftMargin" format="dimension|reference" />
         <attr name="currentTime" format="integer|reference" />
         <attr name="indicatorLineColor" />
         <attr name="indicatorLineWidth" />
