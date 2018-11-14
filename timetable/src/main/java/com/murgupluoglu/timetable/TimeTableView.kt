@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit
  * Date 22/10/2018
  */
 class TimeTableView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
-    View(context, attrs, defStyleAttr) {
+        View(context, attrs, defStyleAttr) {
 
     private var isInitialized = false
     private var startClickTime = 0L
@@ -44,7 +44,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     private var partColor: Int = 0
 
     private var timePartMinFloat: Float =
-        24.minuteToFloat() //when you resize any time-part cannot be smaller than this number 24min
+            24.minuteToFloat() //when you resize any time-part cannot be smaller than this number 24min
 
     //Handles
     lateinit var handlesPaint: Paint
@@ -122,19 +122,19 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         override fun onDown(e: MotionEvent): Boolean {
             logD("onDown ${e.x.toInt()}")
 
-            val xPos = e.x.toInt()
+            val xPosFloat = e.x.pixelToFloat()
 
             scroller.abortAnimation()
 
             timePartList.forEachIndexed { index, timePart ->
 
-                val startPixel = (timePart.start - currentPosition).floatToPixel()
-                val endPixel = (timePart.end - currentPosition).floatToPixel()
+                val startPixel = (timePart.start - currentPosition)
+                val endPixel = (timePart.end - currentPosition)
 
-                val handleStartPixel = startPixel + handlesTouchAreaFloat.floatToPixel()
-                val handleEndPixel = endPixel - handlesTouchAreaFloat.floatToPixel()
+                val handleStartPixel = startPixel + handlesTouchAreaFloat
+                val handleEndPixel = endPixel - handlesTouchAreaFloat
 
-                when (xPos) {
+                when (xPosFloat) {
                     in handleStartPixel..handleEndPixel -> {
                         timePartClickedPart = TimePartParts.CENTER
                         startClickTime = System.currentTimeMillis()
@@ -153,14 +153,14 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
                     }
                 }
 
-                if (xPos in (startPixel)..(endPixel)) {
+                if (xPosFloat in (startPixel)..(endPixel)) {
                     clickedTimePartIndex = index
                     logD("clickedTimePartIndex $clickedTimePartIndex")
                 }
             }
 
 
-            return super.onDown(e)
+            return true
         }
 
         override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
@@ -232,8 +232,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         seperatorTextColor = ta.getColor(R.styleable.TimeTableView_seperatorTextColor, Color.GRAY)
         seperatorTextSize = ta.getDimension(R.styleable.TimeTableView_seperatorTextSize, sp2px(12f).toFloat())
         seperatorTextTopMargin = ta.getDimension(R.styleable.TimeTableView_seperatorTextTopMargin, dp2px(20f).toFloat())
-        seperatorTextLeftMargin =
-                ta.getDimension(R.styleable.TimeTableView_seperatorTextLeftMargin, dp2px(2f).toFloat())
+        seperatorTextLeftMargin = ta.getDimension(R.styleable.TimeTableView_seperatorTextLeftMargin, dp2px(2f).toFloat())
         currentTimeSecond = ta.getInt(R.styleable.TimeTableView_currentTime, 0)
         indicatorWidth = ta.getDimension(R.styleable.TimeTableView_indicatorLineWidth, dp2px(1f).toFloat())
         indicatorColor = ta.getColor(R.styleable.TimeTableView_indicatorLineColor, Color.RED)
@@ -293,7 +292,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        //logD("onTouchEvent $event")
+        logD("onTouchEvent $event")
 
         gestureDetector.onTouchEvent(event)
         restStatusByAction(event)
@@ -305,10 +304,10 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         isMoving = true
 
         val timePart = timePartList[clickedTimePartIndex]
-        var startPositionFloat = timePart.start - distanceXFloat
-        var endPositionFloat = timePart.end - distanceXFloat
+        val startPositionFloat = timePart.start - distanceXFloat
+        val endPositionFloat = timePart.end - distanceXFloat
 
-        logD("distanceXFloat $distanceXFloat startPositionFloat $startPositionFloat")
+        //logD("distanceXFloat $distanceXFloat startPositionFloat $startPositionFloat")
 
         var isPossible = true
         //check left and right time-parts if exist
@@ -360,7 +359,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     private fun computeTime() {
         currentPosition = Math.min(maxTimePixel.pixelToFloat(), Math.max(0f, currentPosition))
-        logD("currentPosition $currentPosition maxTimePixel $maxTimePixel")
+        //logD("currentPosition $currentPosition maxTimePixel $maxTimePixel")
         currentTimeSecond = currentPosition.floatToSecond()
         if (timeTableListener != null) {
             timeTableListener!!.onTimeChanged(currentTimeSecond)
@@ -433,10 +432,10 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
             //draw right bottom end time
             val textEnd = formatTimeHHmm(timePart.end)
             canvas.drawText(
-                textEnd,
-                end - textHalfWidth * 2 - textStartMargin,
-                heightView - seperatorTextTopMargin / 2,
-                textPaint!!
+                    textEnd,
+                    end - textHalfWidth * 2 - textStartMargin,
+                    heightView - seperatorTextTopMargin / 2,
+                    textPaint!!
             )
 
 
@@ -492,10 +491,12 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     fun checkAddPossible(timePart: TimePart): Boolean {
         var isPossible = true
+        if (timePart.start < 0.0 || timePart.end > 24.0) {
+            isPossible = false
+        }
         timePartList.forEach {
             if (timePart.start in it.start..it.end
-                || timePart.end in it.start..it.end
-            ) {
+                    || timePart.end in it.start..it.end) {
                 isPossible = false
             }
         }
@@ -538,10 +539,9 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     private fun formatTimeHHmm(@FloatRange(from = 0.0, to = 24.0) floatSecond: Float): String {
 
-        val second = floatSecond.floatToSecond()
-        val totalMinute = second / 60
-        val hour = totalMinute / 60
-        val minute = totalMinute % 60
+        val hour = floatSecond.toInt()
+        val minute = TimeUnit.SECONDS.toMinutes((floatSecond - hour).floatToSecond().toLong())
+
         val sb = StringBuilder()
         if (hour < 10) {
             sb.append('0')
