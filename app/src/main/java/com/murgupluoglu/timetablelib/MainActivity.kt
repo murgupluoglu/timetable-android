@@ -4,19 +4,19 @@ import android.content.ClipData
 import android.content.Context
 import android.graphics.Rect
 import android.os.Build
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import com.murgupluoglu.timetable.TimeTableView
 import com.murgupluoglu.timetable.minuteToFloat
 import kotlinx.android.synthetic.main.activity_main.*
-import android.support.v4.content.ContextCompat
-import android.support.v4.view.ViewCompat
-import android.support.v7.widget.LinearLayoutManager
 import android.util.Log
 import android.view.*
 import android.view.View.DRAG_FLAG_OPAQUE
 import android.widget.RelativeLayout
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import com.google.android.flexbox.*
 
 
 class MainActivity : AppCompatActivity() {
@@ -36,6 +36,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         shadowBottomMargin = dpTopixel(this@MainActivity, 80f)
+
+
 
         timeTable.isLogEnabled = BuildConfig.DEBUG
         timeTable.timeTableListener = object : TimeTableView.TimeTableListener{
@@ -58,10 +60,15 @@ class MainActivity : AppCompatActivity() {
         myDataset.addAll(getFakeData())
 
 
-        val manager = LinearLayoutManager(this@MainActivity)
+        val flexboxLayoutManager = FlexboxLayoutManager(this).apply {
+            flexWrap = FlexWrap.WRAP
+            flexDirection = FlexDirection.ROW
+            alignItems = AlignItems.STRETCH
+        }
+
         recyclerView.apply {
             setHasFixedSize(true)
-            layoutManager = manager
+            layoutManager = flexboxLayoutManager
             adapter = MyAdapter(myDataset, object : MyAdapterClickLister{
                 override fun onClicked(position: Int, textView: TextView) {
                     Log.e(TAG, "LONG_CLICKED")

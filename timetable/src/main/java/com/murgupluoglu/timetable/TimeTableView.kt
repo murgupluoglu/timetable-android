@@ -5,9 +5,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.support.annotation.FloatRange
-import android.support.annotation.IntRange
-import android.support.v4.content.ContextCompat
+import android.graphics.Typeface
 import android.text.TextPaint
 import android.util.AttributeSet
 import android.util.Log
@@ -16,6 +14,10 @@ import android.view.*
 import android.view.GestureDetector.SimpleOnGestureListener
 import android.widget.Scroller
 import android.widget.Toast
+import androidx.annotation.FloatRange
+import androidx.annotation.IntRange
+import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -55,6 +57,8 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     private var seperatorWidth: Float = 0f
     private var seperatorTextColor: Int = 0
     private var seperatorTextSize: Float = 0f
+    private var seperatorTextFont: Typeface = Typeface.DEFAULT
+    private var seperatorTextFontId = 0
     private var seperatorTextTopMargin: Float = 0f
     private var seperatorTextLeftMargin: Float = 0f
 
@@ -221,6 +225,8 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         currentTimeSecond = ta.getInt(R.styleable.TimeTableView_currentTime, 0)
         indicatorWidth = ta.getDimension(R.styleable.TimeTableView_indicatorLineWidth, dp2px(1f).toFloat())
         indicatorColor = ta.getColor(R.styleable.TimeTableView_indicatorLineColor, Color.RED)
+        seperatorTextFontId = ta.getResourceId(R.styleable.TimeTableView_seperatorTextFontName, 0)
+
         ta.recycle()
     }
 
@@ -236,6 +242,10 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
         textPaint!!.textSize = seperatorTextSize
         textPaint!!.color = seperatorTextColor
+        if(seperatorTextFontId != 0 && !BuildConfig.DEBUG){
+            seperatorTextFont = ResourcesCompat.getFont(context, seperatorTextFontId)!!
+            textPaint!!.typeface = seperatorTextFont
+        }
 
         scroller = Scroller(context)
 

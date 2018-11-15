@@ -1,23 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <attr name="gradationColor" format="reference|color" />
-    <attr name="textColor" format="reference|color" />
-    <attr name="textSize" format="reference|dimension" />
-    <attr name="indicatorLineColor" format="reference|color" />
-    <attr name="indicatorLineWidth" format="reference|dimension" />
 
     <declare-styleable name="TimeTableView">
-        <attr name="backgroundColor" format="reference|color" />
-        <attr name="seperatorColor" />
-        <attr name="partColor" format="color|reference" />
-        <attr name="seperatorWidth" format="dimension|reference" />
-        <attr name="seperatorTextColor" format="color|reference" />
-        <attr name="seperatorTextSize" format="dimension|reference" />
-        <attr name="seperatorTextTopMargin" format="dimension|reference" />
-        <attr name="seperatorTextLeftMargin" format="dimension|reference" />
-        <attr name="currentTime" format="integer|reference" />
-        <attr name="indicatorLineColor" />
-        <attr name="indicatorLineWidth" />
+        <attr name="backgroundColor" format="reference|color"/>
+        <attr name="seperatorColor" format="reference|color"/>
+        <attr name="partColor" format="color|reference"/>
+        <attr name="seperatorWidth" format="dimension|reference"/>
+        <attr name="seperatorTextColor" format="color|reference"/>
+        <attr name="seperatorTextSize" format="dimension|reference"/>
+        <attr name="seperatorTextFontName" format="integer|reference"/>
+        <attr name="seperatorTextTopMargin" format="dimension|reference"/>
+        <attr name="seperatorTextLeftMargin" format="dimension|reference"/>
+        <attr name="currentTime" format="integer|reference"/>
+        <attr name="indicatorLineColor" format="reference|color"/>
+        <attr name="indicatorLineWidth" format="reference|dimension"/>
     </declare-styleable>
 
 </resources>
