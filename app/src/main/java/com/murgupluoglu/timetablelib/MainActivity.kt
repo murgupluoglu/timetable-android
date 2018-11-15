@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import com.google.android.flexbox.*
+import kotlinx.android.synthetic.main.button_layout.view.*
 
 
 class MainActivity : AppCompatActivity() {
@@ -41,6 +42,7 @@ class MainActivity : AppCompatActivity() {
 
         timeTable.isLogEnabled = BuildConfig.DEBUG
         timeTable.timeTableListener = object : TimeTableView.TimeTableListener{
+
             override fun initialized() {
 
                 val part = TimeTableView.TimePart()
@@ -54,6 +56,19 @@ class MainActivity : AppCompatActivity() {
 
             override fun onTimeChanged(newTimeValue: Int) {
 
+            }
+
+            override fun onItemDeleted(position: Int, isHovered: Boolean, posX: Float) {
+                Log.e("ON_ITEM_DELETED", "position $position isHovered $isHovered")
+                val x = posX
+                val y = timeTable.y / 2
+                val iconName = myDataset.get(position).iconName
+                Log.e("ON_ITEM_DELETED", "x:$x y:$y iconName:$iconName")
+                moveShadow(x, y, iconName)
+
+                val rootShadowLayout = createLayout(x, y, iconName) as RelativeLayout
+                startDrag(rootShadowLayout.nameTextView, iconName)
+                rootShadowLayout.visibility = View.GONE
             }
         }
 
@@ -73,12 +88,7 @@ class MainActivity : AppCompatActivity() {
                 override fun onClicked(position: Int, textView: TextView) {
                     Log.e(TAG, "LONG_CLICKED")
 
-                    val clipData = ClipData.newPlainText(myDataset.get(position).iconName, myDataset.get(position).iconName)
-                    shadowBuilder = EmptyDragShadowBuilder(textView)
-
-                    val flag = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) DRAG_FLAG_OPAQUE else 0
-                    ViewCompat.startDragAndDrop(textView, clipData, shadowBuilder, textView, flag)
-
+                    startDrag(textView, myDataset.get(position).iconName)
                     textView.visibility = View.INVISIBLE
                 }
             })
@@ -89,33 +99,45 @@ class MainActivity : AppCompatActivity() {
         //timeTable.setOnDragListener(TimeTableDragListener())
     }
 
+    fun createLayout(posX: Float, posY: Float, iconName: String): View {
+        val inflater = LayoutInflater.from(this@MainActivity)
+
+        val view = inflater.inflate(R.layout.button_layout, null)
+
+        val textView = view.findViewById<TextView>(R.id.nameTextView)
+        textView.background = ContextCompat.getDrawable(this@MainActivity, R.drawable.rounded_background_white)
+
+        val resId = resources.getIdentifier(iconName, "drawable", packageName)
+        val drawable = ContextCompat.getDrawable(this@MainActivity, resId)!!
+        textView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null)
+
+        view.x = posX
+        view.y = posY
+
+        view.id = R.id.rootShadowLayout
+
+        rootConstraintLayout.addView(view)
+
+        return view
+    }
+
+    fun startDrag(view : View, iconName: String){
+        val clipData = ClipData.newPlainText(iconName, iconName)
+        shadowBuilder = EmptyDragShadowBuilder(view)
+
+        val flag = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) DRAG_FLAG_OPAQUE else 0
+        ViewCompat.startDragAndDrop(view, clipData, shadowBuilder, view, flag)
+    }
+
     fun moveShadow(posX : Float, posY : Float, iconName : String){
 
         var rootShadowLayout : RelativeLayout? = rootConstraintLayout.findViewById(R.id.rootShadowLayout)
 
-        if(rootShadowLayout == null){
-            val inflater = LayoutInflater.from(this@MainActivity)
+        if(rootShadowLayout == null)
+            rootShadowLayout = createLayout(posX, posY, iconName) as RelativeLayout
 
-            val view = inflater.inflate(R.layout.button_layout, null)
-
-            val textView = view.findViewById<TextView>(R.id.nameTextView)
-            textView.background = ContextCompat.getDrawable(this@MainActivity, R.drawable.rounded_background_white)
-
-            val resId = resources.getIdentifier(iconName, "drawable", packageName)
-            val drawable = ContextCompat.getDrawable(this@MainActivity, resId)!!
-            textView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null)
-
-            view.x = posX
-            view.y = posY
-
-            view.id = R.id.rootShadowLayout
-
-            rootConstraintLayout.addView(view)
-
-            rootShadowLayout = rootConstraintLayout.findViewById(R.id.rootShadowLayout)
-        }
-
-        rootShadowLayout!!.x = posX - shadowBottomMargin/3
+        rootShadowLayout.visibility = View.VISIBLE
+        rootShadowLayout.x = posX - shadowBottomMargin/3
         rootShadowLayout.y = posY - shadowBottomMargin
     }
 

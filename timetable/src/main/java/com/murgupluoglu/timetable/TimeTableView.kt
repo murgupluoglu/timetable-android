@@ -83,6 +83,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     interface TimeTableListener {
         fun initialized()
         fun onTimeChanged(newTimeValue: Int)
+        fun onItemDeleted(position: Int, isHovered: Boolean, posX: Float)
     }
 
     private var timePartClickedPart: TimePartParts = TimePartParts.NOT_CLICKED
@@ -97,7 +98,8 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     enum class MoveActions {
         DEFAULT,
         MOVING,
-        SCROLLING
+        SCROLLING,
+        HOVERED
     }
 
     var currentMoveAction = MoveActions.DEFAULT
@@ -174,7 +176,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
             logD("onScroll timePartClickedPart:$timePartClickedPart currentMoveAction:$currentMoveAction")
 
-            if(currentMoveAction != MoveActions.MOVING){
+            if (currentMoveAction != MoveActions.MOVING) {
                 currentMoveAction = MoveActions.SCROLLING
                 currentPosition += distanceX.pixelToFloat()
             }
@@ -188,14 +190,14 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
                 currentMoveAction = MoveActions.SCROLLING
                 scroller.forceFinished(true)
                 scroller.fling(
-                    currentPosition.floatToPixel().toInt(),
-                    0,
-                    (-velocityX).toInt(),
-                    0,
-                    0,
-                    maxTimePixel.toInt(),
-                    0,
-                    0
+                        currentPosition.floatToPixel().toInt(),
+                        0,
+                        (-velocityX).toInt(),
+                        0,
+                        0,
+                        maxTimePixel.toInt(),
+                        0,
+                        0
                 )
             }
             return true
@@ -242,7 +244,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
         textPaint!!.textSize = seperatorTextSize
         textPaint!!.color = seperatorTextColor
-        if(seperatorTextFontId != 0 && !BuildConfig.DEBUG){
+        if (seperatorTextFontId != 0 && !BuildConfig.DEBUG) {
             seperatorTextFont = ResourcesCompat.getFont(context, seperatorTextFontId)!!
             textPaint!!.typeface = seperatorTextFont
         }
@@ -283,23 +285,36 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     var waitScroll = 0L
     var lastX = 0f
+    var lastY = 0f
     private fun restStatusByAction(event: MotionEvent) {
         val action = event.action and MotionEvent.ACTION_MASK
 
         when (action) {
             MotionEvent.ACTION_MOVE -> {
                 logD("ACTION_MOVE")
-                val diff = lastX - event.x
+                val diffX = lastX - event.x
+                val diffY = lastY - event.y
 
-                if(lastX != 0f && System.currentTimeMillis() - waitScroll > 100){
-                    val distanceXFloat = diff.pixelToFloat()
+                if (lastX != 0f && System.currentTimeMillis() - waitScroll > 100) {
+                    val distanceXFloat = diffX.pixelToFloat()
 
                     when (timePartClickedPart) {
                         TimePartParts.CENTER,
                         TimePartParts.LEFT_HANDLE,
                         TimePartParts.RIGHT_HANDLE -> {
-                            if (currentMoveAction != MoveActions.SCROLLING) {
-                                moveTimePart(distanceXFloat)
+                            if (currentMoveAction != MoveActions.SCROLLING
+                                    && currentMoveAction != MoveActions.HOVERED) {
+                                logD("DIFF_Y ${Math.abs(diffY)}")
+                                if (currentMoveAction != MoveActions.MOVING && Math.abs(diffY) > 2.0) {
+                                    currentMoveAction = MoveActions.HOVERED
+                                    timePartList.removeAt(clickedTimePartIndex)
+                                    timeTableListener?.apply {
+                                        onItemDeleted(clickedTimePartIndex, true, currentPosition.floatToPixel() % widthView)
+                                    }
+                                    Toast.makeText(context, "HOVERED", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    moveTimePart(distanceXFloat)
+                                }
                             }
                         }
                         TimePartParts.NOT_CLICKED -> {
@@ -309,12 +324,14 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
                     }
                 }
                 lastX = event.x
+                lastY = event.y
             }
             MotionEvent.ACTION_UP -> {
                 logD("ACTION_UP")
                 timePartClickedPart = TimePartParts.NOT_CLICKED
                 currentMoveAction = MoveActions.DEFAULT
                 lastX = 0f
+                lastY = 0f
             }
         }
 
