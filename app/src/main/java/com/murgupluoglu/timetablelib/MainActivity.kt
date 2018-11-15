@@ -133,19 +133,19 @@ class MainActivity : AppCompatActivity() {
 
     fun getFakeData() : ArrayList<RecyclerViewItem>{
         val array = ArrayList<RecyclerViewItem>()
-        array.add(RecyclerViewItem("ic_android_24dp", "Cupcake"))
-        array.add(RecyclerViewItem("ic_android_24dp", "Donuts"))
-        array.add(RecyclerViewItem("ic_brightness_24dp", "Eclairs"))
-        array.add(RecyclerViewItem("ic_android_24dp", "Froyo"))
-        array.add(RecyclerViewItem("ic_brightness_24dp", "Ginger bread"))
-        array.add(RecyclerViewItem("ic_android_24dp", "Honeycomb"))
-        array.add(RecyclerViewItem("ic_android_24dp", "Ice Cream Sanwich"))
-        array.add(RecyclerViewItem("ic_android_24dp", "Jelly Bean"))
-        array.add(RecyclerViewItem("ic_brightness_24dp", "Kitkat"))
-        array.add(RecyclerViewItem("ic_android_24dp", "Lolipop"))
-        array.add(RecyclerViewItem("ic_android_24dp", "Marshmallow"))
-        array.add(RecyclerViewItem("ic_android_24dp", "Nougat"))
-        array.add(RecyclerViewItem("ic_brightness_24dp", "Oreo"))
+        array.add(RecyclerViewItem("ic_cherry", "Cherry"))
+        array.add(RecyclerViewItem("ic_peanut", "Peanut"))
+        array.add(RecyclerViewItem("ic_onion", "Onion"))
+        array.add(RecyclerViewItem("ic_tomato", "Tomato"))
+        array.add(RecyclerViewItem("ic_pitaya", "Pitaya"))
+        array.add(RecyclerViewItem("ic_durian", "Durian"))
+        array.add(RecyclerViewItem("ic_lettuce", "Lettuce"))
+        array.add(RecyclerViewItem("ic_broccoli", "Broccoli"))
+        array.add(RecyclerViewItem("ic_corn", "Corn"))
+        array.add(RecyclerViewItem("ic_breast_milk_fruit", "Breast Milk Fruit"))
+        array.add(RecyclerViewItem("ic_blueberry", "Blueberry"))
+        array.add(RecyclerViewItem("ic_potato", "Potato"))
+        array.add(RecyclerViewItem("test", "Test"))
         return array
     }
 
