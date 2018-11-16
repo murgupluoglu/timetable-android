@@ -190,7 +190,7 @@ class MainActivity : AppCompatActivity() {
                     Log.e(TAG, "ACTION_DRAG_STARTED ${returnedDraggedView.text}")
                 }
                 DragEvent.ACTION_DRAG_LOCATION -> {
-                    Log.e(TAG, "ACTION_DRAG_LOCATION")
+                    //Log.e(TAG, "ACTION_DRAG_LOCATION")
                 }
                 DragEvent.ACTION_DROP -> {
                     Log.e(TAG, "ACTION_DROP")
