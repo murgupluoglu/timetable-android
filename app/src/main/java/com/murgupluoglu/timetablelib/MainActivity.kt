@@ -58,11 +58,11 @@ class MainActivity : AppCompatActivity() {
 
             }
 
-            override fun onItemDeleted(position: Int, isHovered: Boolean, posX: Float) {
+            override fun onItemDeleted(timePart: TimeTableView.TimePart, position: Int, isHovered: Boolean, posX: Float) {
                 Log.e("ON_ITEM_DELETED", "position $position isHovered $isHovered")
                 val x = posX
                 val y = timeTable.y / 2
-                val iconName = myDataset.get(position).iconName
+                val iconName = timePart.centerImageName!!
                 Log.e("ON_ITEM_DELETED", "x:$x y:$y iconName:$iconName")
                 moveShadow(x, y, iconName)
 
@@ -86,10 +86,10 @@ class MainActivity : AppCompatActivity() {
             layoutManager = flexboxLayoutManager
             adapter = MyAdapter(myDataset, object : MyAdapterClickLister{
                 override fun onClicked(position: Int, textView: TextView) {
-                    Log.e(TAG, "LONG_CLICKED")
-
-                    startDrag(textView, myDataset.get(position).iconName)
+                    startDrag(textView, myDataset[position].iconName)
                     textView.visibility = View.INVISIBLE
+
+                    Log.e(TAG, "LONG_CLICKED iconName ${myDataset[position].iconName}")
                 }
             })
         }
@@ -107,9 +107,6 @@ class MainActivity : AppCompatActivity() {
         val textView = view.findViewById<TextView>(R.id.nameTextView)
         textView.background = ContextCompat.getDrawable(this@MainActivity, R.drawable.rounded_background_white)
 
-        val resId = resources.getIdentifier(iconName, "drawable", packageName)
-        val drawable = ContextCompat.getDrawable(this@MainActivity, resId)!!
-        textView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null)
 
         view.x = posX
         view.y = posY
@@ -135,6 +132,11 @@ class MainActivity : AppCompatActivity() {
 
         if(rootShadowLayout == null)
             rootShadowLayout = createLayout(posX, posY, iconName) as RelativeLayout
+
+        val textView = rootShadowLayout.findViewById<TextView>(R.id.nameTextView)
+        val resId = resources.getIdentifier(iconName, "drawable", packageName)
+        val drawable = ContextCompat.getDrawable(this@MainActivity, resId)!!
+        textView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null)
 
         rootShadowLayout.visibility = View.VISIBLE
         rootShadowLayout.x = posX - shadowBottomMargin/3

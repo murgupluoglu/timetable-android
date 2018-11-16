@@ -83,7 +83,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     interface TimeTableListener {
         fun initialized()
         fun onTimeChanged(newTimeValue: Int)
-        fun onItemDeleted(position: Int, isHovered: Boolean, posX: Float)
+        fun onItemDeleted(timePart: TimePart, position: Int, isHovered: Boolean, posX: Float)
     }
 
     private var timePartClickedPart: TimePartParts = TimePartParts.NOT_CLICKED
@@ -321,10 +321,10 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
                                 } else if (diffWithFirstY > 15) {
                                     logD("HOVERED")
                                     currentMoveAction = MoveActions.HOVERED
-                                    timePartList.removeAt(clickedTimePartIndex)
                                     timeTableListener?.apply {
-                                        onItemDeleted(clickedTimePartIndex, true, currentPosition.floatToPixel() % widthView)
+                                        onItemDeleted(timePartList.get(clickedTimePartIndex), clickedTimePartIndex, true, currentPosition.floatToPixel() % widthView)
                                     }
+                                    timePartList.removeAt(clickedTimePartIndex)
                                 }
 
                             }

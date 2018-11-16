@@ -5,7 +5,7 @@
     android:id="@+id/rootConstraintLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#16786a">
+    android:background="@color/colorPrimary">
 
     <TextView
         android:id="@+id/textView"
@@ -33,7 +33,8 @@
         app:seperatorTextFontName="@font/cherrycreamsoda_regular"
         app:seperatorTextSize="9sp"
         app:seperatorTextTopMargin="20dp"
-        app:seperatorWidth="1dp" />
+        app:seperatorWidth="1dp"
+        app:partColor="#8F2CFA"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
