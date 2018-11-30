@@ -528,10 +528,10 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
             timePartList.add(timePart)
             sortList()
         } else {
-            Toast.makeText(context, "NOT_POSSIBLE", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "NOT_POSSIBLE", Toast.LENGTH_SHORT).show() //TODO delete this
         }
 
-        timePartList.forEachIndexed { index, part ->
+        timePartList.forEachIndexed { index, part -> //TODO delete this
             logD(" ***$index*** \n $part \n *****")
         }
         postInvalidate()
@@ -576,6 +576,11 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         timePartList.sortWith(Comparator { p0, p1 ->
             (p0.start).compareTo(p1.end)
         })
+    }
+
+    fun clearAll(){
+        timePartList.clear()
+        invalidate()
     }
 
 
