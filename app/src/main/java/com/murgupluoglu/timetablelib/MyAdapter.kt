@@ -1,11 +1,20 @@
 package com.murgupluoglu.timetablelib
 
+import android.graphics.Bitmap
+import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.URLUtil
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.blankj.utilcode.util.ConvertUtils
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.target.SimpleTarget
+import com.bumptech.glide.request.transition.Transition
+import androidx.core.graphics.drawable.DrawableCompat
 
 
 data class RecyclerViewItem(val iconName : String, val name : String)
@@ -35,11 +44,25 @@ class MyAdapter(private val myDataset: ArrayList<RecyclerViewItem>, val myAdapte
             true
         }
 
-
         val context = holder.itemView.context
-        val resId = context.resources.getIdentifier(item.iconName, "drawable", context.packageName)
-        val drawable = ContextCompat.getDrawable(holder.itemView.context, resId)!!
-        holder.nameTextView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null)
+
+        if(URLUtil.isValidUrl(item.iconName)){
+            Glide.with(context)
+                    .asBitmap()
+                    .load(item.iconName)
+                    .into(object : SimpleTarget<Bitmap>(ConvertUtils.dp2px(24f), ConvertUtils.dp2px(24f)) {
+                        override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                            val drawable = BitmapDrawable(context.resources, resource)
+                            DrawableCompat.setTint(drawable, Color.WHITE)
+                            holder.nameTextView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null)
+                        }
+                    })
+        }else{
+            val resId = context.resources.getIdentifier(item.iconName, "drawable", context.packageName)
+            val drawable = ContextCompat.getDrawable(context, resId)!!
+            holder.nameTextView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null)
+        }
+
     }
 
     // Return the size of your dataset (invoked by the layout manager)

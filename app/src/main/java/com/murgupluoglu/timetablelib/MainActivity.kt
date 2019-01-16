@@ -2,30 +2,45 @@ package com.murgupluoglu.timetablelib
 
 import android.content.ClipData
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Rect
+import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import android.os.Bundle
-import com.murgupluoglu.timetable.TimeTableView
-import com.murgupluoglu.timetable.minuteToFloat
-import kotlinx.android.synthetic.main.activity_main.*
 import android.util.Log
-import android.view.*
+import android.view.DragEvent
+import android.view.LayoutInflater
+import android.view.View
 import android.view.View.DRAG_FLAG_OPAQUE
+import android.webkit.URLUtil
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.view.ViewCompat
-import com.google.android.flexbox.*
+import com.blankj.utilcode.util.ConvertUtils
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.target.SimpleTarget
+import com.bumptech.glide.request.transition.Transition
+import com.google.android.flexbox.AlignItems
+import com.google.android.flexbox.FlexDirection
+import com.google.android.flexbox.FlexWrap
+import com.google.android.flexbox.FlexboxLayoutManager
+import com.murgupluoglu.timetable.TimeTableView
+import com.murgupluoglu.timetable.minuteToFloat
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.button_layout.view.*
 
 
 class MainActivity : AppCompatActivity() {
 
-
     companion object {
         lateinit var shadowBuilder : View.DragShadowBuilder
     }
+
     val TAG = "MainActivity"
 
     val myDataset: ArrayList<RecyclerViewItem> = ArrayList()
@@ -39,16 +54,40 @@ class MainActivity : AppCompatActivity() {
         shadowBottomMargin = dpTopixel(this@MainActivity, 80f)
 
 
-
         timeTable.isLogEnabled = BuildConfig.DEBUG
         timeTable.timeTableListener = object : TimeTableView.TimeTableListener{
+
+            override fun getItemBitmap(timePart: TimeTableView.TimePart, position: Int) : Bitmap {
+                val resId = resources.getIdentifier(timePart.centerImage, "drawable", packageName)
+                //val drawable = ContextCompat.getDrawable(this@MainActivity, resId)
+                //var drawable : Drawable? = Drawable.createFromPath(timePart.centerImage)
+
+                var bitmap = timeTable.getEmptyBitmap()
+
+                if(URLUtil.isValidUrl(timePart.centerImage)){
+                    Glide.with(this@MainActivity)
+                            .asBitmap()
+                            .load(timePart.centerImage)
+                            .into(object : SimpleTarget<Bitmap>(ConvertUtils.dp2px(24f), ConvertUtils.dp2px(24f)) {
+                                override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                                    //val drawable = BitmapDrawable(resources, resource)
+                                    //DrawableCompat.setTint(drawable, Color.WHITE)
+                                    bitmap = resource
+                                }
+                            })
+                }else{
+                     bitmap = getBitmapFromVectorDrawable(this@MainActivity, resId)
+                }
+
+                return bitmap
+            }
 
             override fun initialized() {
 
                 val part = TimeTableView.TimePart()
                 part.start = 0.minuteToFloat()
-                part.end = part.start + 24.minuteToFloat()
-                part.centerImageName = "ic_android_24dp"
+                part.end = part.start + 60.minuteToFloat()
+                part.centerImage = "ic_android_24dp"
 
                 timeTable.addTimePart(part)
                 //timeTable.setCurrentTimeMinute(122.minuteToFloat())
@@ -62,7 +101,7 @@ class MainActivity : AppCompatActivity() {
                 Log.e("ON_ITEM_DELETED", "position $position isHovered $isHovered")
                 val x = posX
                 val y = timeTable.y / 2
-                val iconName = timePart.centerImageName!!
+                val iconName = timePart.centerImage!!
                 Log.e("ON_ITEM_DELETED", "x:$x y:$y iconName:$iconName")
                 moveShadow(x, y, iconName)
 
@@ -99,6 +138,20 @@ class MainActivity : AppCompatActivity() {
         //timeTable.setOnDragListener(TimeTableDragListener())
     }
 
+    fun getBitmapFromVectorDrawable(context : Context, drawableId : Int) : Bitmap {
+    var drawable = ContextCompat.getDrawable(context, drawableId)
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+        drawable = (DrawableCompat.wrap(drawable!!)).mutate()
+    }
+
+    val bitmap = Bitmap.createBitmap(drawable!!.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight())
+    drawable.draw(canvas)
+
+    return bitmap;
+}
+
     fun createLayout(posX: Float, posY: Float, iconName: String): View {
         val inflater = LayoutInflater.from(this@MainActivity)
 
@@ -134,9 +187,25 @@ class MainActivity : AppCompatActivity() {
             rootShadowLayout = createLayout(posX, posY, iconName) as RelativeLayout
 
         val textView = rootShadowLayout.findViewById<TextView>(R.id.nameTextView)
-        val resId = resources.getIdentifier(iconName, "drawable", packageName)
-        val drawable = ContextCompat.getDrawable(this@MainActivity, resId)!!
-        textView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null)
+
+        if(URLUtil.isValidUrl(iconName)){
+            Glide.with(this@MainActivity)
+                    .asBitmap()
+                    .load(iconName)
+                    .into(object : SimpleTarget<Bitmap>(ConvertUtils.dp2px(24f), ConvertUtils.dp2px(24f)) {
+                        override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                            val drawable = BitmapDrawable(resources, resource)
+                            DrawableCompat.setTint(drawable, Color.WHITE)
+                            textView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null)
+                        }
+                    })
+        }else{
+            val resId = resources.getIdentifier(iconName, "drawable", packageName)
+            val drawable = ContextCompat.getDrawable(this@MainActivity, resId)!!
+            textView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null)
+        }
+
+
 
         rootShadowLayout.visibility = View.VISIBLE
         rootShadowLayout.x = posX - shadowBottomMargin/3
@@ -157,7 +226,7 @@ class MainActivity : AppCompatActivity() {
 
     fun getFakeData() : ArrayList<RecyclerViewItem>{
         val array = ArrayList<RecyclerViewItem>()
-        array.add(RecyclerViewItem("ic_cherry", "Cherry"))
+        array.add(RecyclerViewItem("https://img.icons8.com/metro/1600/search.png", "Link Icon"))
         array.add(RecyclerViewItem("ic_peanut", "Peanut"))
         array.add(RecyclerViewItem("ic_onion", "Onion"))
         array.add(RecyclerViewItem("ic_tomato", "Tomato"))
@@ -169,7 +238,8 @@ class MainActivity : AppCompatActivity() {
         array.add(RecyclerViewItem("ic_breast_milk_fruit", "Breast Milk Fruit"))
         array.add(RecyclerViewItem("ic_blueberry", "Blueberry"))
         array.add(RecyclerViewItem("ic_potato", "Potato"))
-        array.add(RecyclerViewItem("test", "Test"))
+        array.add(RecyclerViewItem("test", "Jpeg Icon"))
+        array.add(RecyclerViewItem("https://upload.wikimedia.org/wikipedia/commons/7/76/Slack_Icon.png", "Link Icon Slack"))
         return array
     }
 
@@ -189,7 +259,7 @@ class MainActivity : AppCompatActivity() {
             val action = event.action
             when (action) {
                 DragEvent.ACTION_DRAG_STARTED -> {
-                    Log.e(TAG, "ACTION_DRAG_STARTED ${returnedDraggedView.text}")
+                    //Log.e(TAG, "ACTION_DRAG_STARTED ${returnedDraggedView.text}")
                 }
                 DragEvent.ACTION_DRAG_LOCATION -> {
                     //Log.e(TAG, "ACTION_DRAG_LOCATION")
@@ -201,7 +271,7 @@ class MainActivity : AppCompatActivity() {
                     val rect = Rect()
                     timeTable.getHitRect(rect)
                     if(rect.contains(event.x.toInt(), event.y.toInt())) {
-                        timeTable.addTimePartWithPosition(24.minuteToFloat(), event.x, iconName!!)
+                        timeTable.addTimePartForce(60.minuteToFloat(), event.x, iconName!!)
                     }
                     dragEnded()
                 }

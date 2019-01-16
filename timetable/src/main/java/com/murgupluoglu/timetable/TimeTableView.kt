@@ -2,10 +2,7 @@ package com.murgupluoglu.timetable
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Typeface
+import android.graphics.*
 import android.text.TextPaint
 import android.util.AttributeSet
 import android.util.Log
@@ -16,10 +13,12 @@ import android.widget.Scroller
 import android.widget.Toast
 import androidx.annotation.FloatRange
 import androidx.annotation.IntRange
-import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import java.util.*
 import java.util.concurrent.TimeUnit
+import android.graphics.Bitmap
+
+
 
 /**
  * Mustafa Urgupluoglu
@@ -27,6 +26,11 @@ import java.util.concurrent.TimeUnit
  */
 class TimeTableView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
         View(context, attrs, defStyleAttr) {
+
+    fun getEmptyBitmap() : Bitmap {
+        val conf = Bitmap.Config.ARGB_8888
+        return Bitmap.createBitmap(centerImageSize, centerImageSize, conf)
+    }
 
     private var isInitialized = false
     var isLogEnabled = false
@@ -44,8 +48,10 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     //Part
     private var partColor: Int = 0
 
-    private var timePartMinFloat: Float =
-            24.minuteToFloat() //when you resize any time-part cannot be smaller than this number 24min
+    /**
+     *  when you resize any time-part cannot be smaller than this number
+     */
+    var timePartMinFloat: Float = 24.minuteToFloat()
 
     //Handles
     lateinit var handlesPaint: Paint
@@ -66,7 +72,10 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     private var indicatorWidth: Float = 0.toFloat()
 
     private var maxTimePixel: Float = 0f
-    private var currentPosition: Float = 0f //Distance between current time and 00:00
+    /**
+     * Distance between current time and 00:00
+     */
+    private var currentPosition: Float = 0f
 
     lateinit var paint: Paint
     private var textPaint: TextPaint? = null
@@ -84,6 +93,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         fun initialized()
         fun onTimeChanged(newTimeValue: Int)
         fun onItemDeleted(timePart: TimePart, position: Int, isHovered: Boolean, posX: Float)
+        fun getItemBitmap(timePart: TimePart, position: Int) : Bitmap
     }
 
     private var timePartClickedPart: TimePartParts = TimePartParts.NOT_CLICKED
@@ -121,10 +131,12 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         /**
          * Center image 24x24
          */
-        var centerImageName: String? = null
+        var centerImage: String? = null
 
         override fun toString(): String {
-            return "start ${start.floatToSecond()} \n end ${end.floatToSecond()} \n image $centerImageName"
+            return "start ${start.floatToSecond()} \n" +
+                    "end ${end.floatToSecond()} \n" +
+                    "image $centerImage"
         }
     }
 
@@ -156,24 +168,24 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
                 when (xPosFloat) {
                     in handleStartPixel..handleEndPixel -> {
                         timePartClickedPart = TimePartParts.CENTER
-                        logD("Clicked Center")
+                        //logD("Clicked Center")
                         //Toast.makeText(context, "Clicked Center", Toast.LENGTH_SHORT).show()
                     }
                     in (startPixel)..handleStartPixel -> {
                         timePartClickedPart = TimePartParts.LEFT_HANDLE
-                        logD("Clicked LeftHandle")
+                        //logD("Clicked LeftHandle")
                         //Toast.makeText(context, "Clicked LeftHandle", Toast.LENGTH_SHORT).show()
                     }
                     in handleEndPixel..(endPixel) -> {
                         timePartClickedPart = TimePartParts.RIGHT_HANDLE
-                        logD("Clicked RightHandle")
+                        //logD("Clicked RightHandle")
                         //Toast.makeText(context, "Clicked RightHandle", Toast.LENGTH_SHORT).show()
                     }
                 }
 
                 if (xPosFloat in (startPixel)..(endPixel)) {
                     clickedTimePartIndex = index
-                    logD("clickedTimePartIndex $clickedTimePartIndex")
+                    //logD("clickedTimePartIndex $clickedTimePartIndex")
                 }
             }
 
@@ -303,10 +315,10 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
                 val diffXAbs = Math.abs(diffX)
                 val diffWithFirstX = Math.abs(firstTouchX - event.x)
                 val diffWithFirstY = Math.abs(firstTouchY - event.y)
-                logD("diffWithFirst $diffWithFirstX")
+                //logD("diffWithFirst $diffWithFirstX")
 
                 if (lastX != 0f && System.currentTimeMillis() - waitScroll > 100) {
-                    logD("ACTION_MOVE currentMoveAction $currentMoveAction diffXAbs $diffXAbs")
+                    //logD("ACTION_MOVE currentMoveAction $currentMoveAction diffXAbs $diffXAbs")
                     val distanceXFloat = diffX.pixelToFloat()
 
                     when (timePartClickedPart) {
@@ -319,7 +331,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
                                 if (currentMoveAction == MoveActions.MOVING || diffWithFirstX > 15) {
                                     moveTimePart(distanceXFloat)
                                 } else if (diffWithFirstY > 15) {
-                                    logD("HOVERED")
+                                    //logD("HOVERED")
                                     currentMoveAction = MoveActions.HOVERED
                                     timeTableListener?.apply {
                                         onItemDeleted(timePartList.get(clickedTimePartIndex), clickedTimePartIndex, true, currentPosition.floatToPixel() % widthView)
@@ -348,7 +360,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
 
     private fun moveTimePart(distanceXFloat: Float) {
-        logD("moveTimePart")
+        //logD("moveTimePart")
         currentMoveAction = MoveActions.MOVING
 
         val timePart = timePartList[clickedTimePartIndex]
@@ -488,13 +500,16 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
 
             //draw center image
-            val resId = resources.getIdentifier(timePart.centerImageName, "drawable", context.packageName)
-            val drawable = ContextCompat.getDrawable(context, resId)
-            val xStart = start + (end - start) / 2 - centerImageSize / 2
-            val yStart = heightView / 2 - centerImageSize / 2
-            drawable!!.setBounds(xStart.toInt(), yStart, ((xStart + centerImageSize).toInt()), yStart + centerImageSize)
-            drawable.draw(canvas)
-
+            timeTableListener?.getItemBitmap(timePart, index)?.let {
+                val xStart = start + (end - start) / 2 - centerImageSize / 2
+                val yStart = heightView / 2 - centerImageSize / 2
+                canvas.drawBitmap(
+                        it,
+                        Rect(0, 0, centerImageSize, centerImageSize),
+                        Rect(xStart.toInt(), yStart , ((xStart + centerImageSize).toInt()), yStart + centerImageSize),
+                        paint
+                )
+            }
 
             //draw left handle
             val xHandleLeft = (start + textStartMargin + 8f)
@@ -525,15 +540,15 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     fun addTimePart(timePart: TimePart) {
 
         if (checkAddPossible(timePart)) {
+            Toast.makeText(context, "ADDED", Toast.LENGTH_SHORT).show()
+            logD("ADDED")
             timePartList.add(timePart)
             sortList()
         } else {
-            Toast.makeText(context, "NOT_POSSIBLE", Toast.LENGTH_SHORT).show() //TODO delete this
+            logD("NOT_POSSIBLE_ADDTIMEPART")
+            Toast.makeText(context, "NOT_POSSIBLE_ADDTIMEPART", Toast.LENGTH_SHORT).show() //TODO delete this
         }
 
-        timePartList.forEachIndexed { index, part -> //TODO delete this
-            logD(" ***$index*** \n $part \n *****")
-        }
         postInvalidate()
     }
 
@@ -542,9 +557,13 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         if (timePart.start < 0.0 || timePart.end > 24.0) {
             isPossible = false
         }
+        logD("timePartList.size ${timePartList.size}")
+        logD("timePartList s${formatTimeHHmm(timePart.start)}e${formatTimeHHmm(timePart.end)}")
         timePartList.forEach {
-            if (timePart.start in it.start..it.end
-                    || timePart.end in it.start..it.end) {
+            logD("${it.centerImage} s${formatTimeHHmm(it.start)}e${formatTimeHHmm(it.end)}")
+            if (it.start < timePart.start && timePart.start < it.end
+                    || it.start < timePart.end && timePart.end < it.end
+                    || timePart.start < it.start && timePart.end > it.end) {
                 isPossible = false
             }
         }
@@ -557,7 +576,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         val timePart = TimePart()
         timePart.start = currentPosition + posX.pixelToFloat() - (lengthFloat / 2)
         timePart.end = timePart.start + lengthFloat
-        timePart.centerImageName = iconName
+        timePart.centerImage = iconName
 
         if (checkAddPossible(timePart)) {
             timePartList.add(timePart)
@@ -567,18 +586,137 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         }
 
         timePartList.forEachIndexed { index, part ->
-            logD(" ***$index*** \n $part \n *****")
+            //logD(" ***$index*** \n $part \n *****")
         }
-        postInvalidate()
+        invalidate()
+    }
+
+    fun addTimePartForce(lengthFloat: Float, posX: Float, iconName: String) {
+
+        val timePart = TimePart()
+        timePart.start = currentPosition + posX.pixelToFloat() - (lengthFloat / 2)
+        timePart.end = timePart.start + lengthFloat
+        timePart.centerImage = iconName
+
+
+        if (timePart.start < 0.0) timePart.start = 0f
+        if (timePart.end > 24.0) timePart.end = 24f
+
+
+        //logD("Original_ADD_PART ${formatTimeHHmm(timePart.start)}-${formatTimeHHmm(timePart.end)}")
+
+        if (checkAddPossible(timePart)) {
+            addTimePart(timePart)
+            return
+        } else {
+            logD("NOT_POSSIBLE_1")
+        }
+
+        var prevIndex = -1
+        for (i in 0 until timePartList.size) {
+            val part = timePartList[i]
+            if (part.start < timePart.start && timePart.start < part.end) {
+                prevIndex = i
+                break
+            } else if (part.start < timePart.end && timePart.end < part.end) {
+                prevIndex = i - 1
+                break
+            } else if (timePart.start < part.start && timePart.end > part.end) {
+                prevIndex = i
+                break
+            }
+        }
+        logD("PREV_INDEX $prevIndex")
+
+        var nextIndex = prevIndex + 1
+        var prevPart = if (prevIndex > -1) timePartList[prevIndex] else null
+        var nextPart = if (nextIndex < timePartList.size) timePartList[nextIndex] else null
+
+        var canMinusLeftPart = 0f
+        var canMinusRightPart = 0f
+
+        val start = prevPart?.end ?: 0f
+        val end: Float = nextPart?.start ?: 24f
+        val totalEmptySpace = end - start
+
+        logD("totalEmptySpace ${formatTimeHHmm(totalEmptySpace)} float:$totalEmptySpace")
+
+
+        prevPart?.let {
+            canMinusLeftPart = (it.end - it.start) - timePartMinFloat
+        }
+
+        nextPart?.let {
+            canMinusRightPart = (it.end - it.start) - timePartMinFloat
+        }
+
+        val posSpace = totalEmptySpace + canMinusLeftPart + canMinusRightPart
+        val itemNeededSpace: Float = if (totalEmptySpace - 60.minuteToFloat() > 0) totalEmptySpace - 60.minuteToFloat() else 0f
+        logD("possible_space ${formatTimeHHmm(posSpace)} float:$posSpace")
+
+        if (timePartMinFloat > posSpace) {
+            logD("replace")
+            if (prevPart != null) {
+                timePartList.remove(prevPart)
+                timePart.start = prevPart.start
+                timePart.end = prevPart.end
+                prevPart = null
+                nextIndex--
+            } else if (nextPart != null) {
+                timePartList.remove(nextPart)
+                timePart.start = nextPart.start
+                timePart.end = nextPart.end
+                nextPart = null
+            }
+        }
+
+        timePartList.forEach {
+            logD("ITEM ${it}")
+        }
+
+        //check left
+        prevPart?.let {
+            if (timePart.start < prevPart.end) {
+                val diff = timePart.start - prevPart.start
+                if (diff >= timePartMinFloat) {
+                    //Can resize
+                    timePartList[prevIndex].end = timePart.start
+                } else {
+                    timePartList[prevIndex].end = prevPart.start + timePartMinFloat
+                    timePart.start = timePartList[prevIndex].end
+                }
+            }
+        }
+
+        //check right
+        nextPart?.let {
+            if (timePart.end > nextPart.start) {
+                val diff = timePart.end - nextPart.end
+                if (diff >= timePartMinFloat) {
+                    //Can resize
+                    timePartList[nextIndex].start = timePart.end
+                } else {
+                    timePartList[nextIndex].start = nextPart.end - timePartMinFloat
+                    timePart.end = timePartList[nextIndex].start
+                }
+            }
+        }
+
+
+        logD("Modifyed_ADD_PART ${formatTimeHHmm(timePart.start)}-${formatTimeHHmm(timePart.end)}")
+        addTimePart(timePart)
     }
 
     private fun sortList() {
         timePartList.sortWith(Comparator { p0, p1 ->
             (p0.start).compareTo(p1.end)
         })
+        timePartList.forEach {
+            //logD("${formatTimeHHmm(it.start)}-${formatTimeHHmm(it.end)}")
+        }
     }
 
-    fun clearAll(){
+    fun clearAll() {
         timePartList.clear()
         invalidate()
     }
@@ -616,7 +754,15 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     }
 
     companion object {
-        const val MAX_TIME_VALUE: Int = 24 * 60 * 60
+        /**
+         * seconds x min x hour = 1 day
+         * 60 x 60 x 24 = 86400 seconds
+         */
+        const val MAX_TIME_VALUE: Int = 60 * 60 * 24
+        /**
+         * Our parts 1 hour long, 1 hour = 3600 seconds
+         * 1 / 3600 = 0.000277777777778
+         */
         const val FLOAT_CONSTANT = 0.000277777777778f
     }
 
