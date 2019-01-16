@@ -34,7 +34,8 @@
         app:seperatorTextSize="9sp"
         app:seperatorTextTopMargin="20dp"
         app:seperatorWidth="1dp"
-        app:partColor="#8F2CFA"/>
+        app:partColor="#8F2CFA"
+        app:currentTime="02:34"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"

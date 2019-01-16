@@ -17,7 +17,7 @@ import androidx.core.content.res.ResourcesCompat
 import java.util.*
 import java.util.concurrent.TimeUnit
 import android.graphics.Bitmap
-
+import java.text.SimpleDateFormat
 
 
 /**
@@ -37,13 +37,12 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     private val textStartMargin = dp2px(2f)
     private val centerImageSize = dp2px(24f)
-    private val textHalfWidth: Float
 
 
     @IntRange(from = 0, to = MAX_TIME_VALUE.toLong())
     private var currentTimeSecond: Int = 0
 
-    private var backgroundcolor: Int = 0
+    private var ColorBackground: Int = 0
 
     //Part
     private var partColor: Int = 0
@@ -71,14 +70,15 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     private var indicatorColor: Int = 0
     private var indicatorWidth: Float = 0.toFloat()
 
-    private var maxTimePixel: Float = 0f
     /**
      * Distance between current time and 00:00
      */
     private var currentPosition: Float = 0f
+    private var maxTimePixel: Float = 0f
 
     lateinit var paint: Paint
     private var textPaint: TextPaint? = null
+    private var textPaintMaxWidth: Float = 0f
     lateinit var scroller: Scroller
 
     private var widthView: Int = 0
@@ -227,15 +227,11 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         initAttrs(context, attrs)
 
         init(context)
-
-        textHalfWidth = textPaint!!.measureText("00:00") * .5f
-
-        currentPosition = currentTimeSecond.minuteToFloat()
     }
 
     private fun initAttrs(context: Context, attrs: AttributeSet?) {
         val ta = context.obtainStyledAttributes(attrs, R.styleable.TimeTableView)
-        backgroundcolor = ta.getColor(R.styleable.TimeTableView_backgroundColor, Color.parseColor("#EEEEEE"))
+        ColorBackground = ta.getColor(R.styleable.TimeTableView_backgroundColor, Color.parseColor("#EEEEEE"))
         partColor = ta.getColor(R.styleable.TimeTableView_partColor, Color.parseColor("#8F2CFA"))
         seperatorColor = ta.getColor(R.styleable.TimeTableView_seperatorColor, Color.GRAY)
         seperatorWidth = ta.getDimension(R.styleable.TimeTableView_seperatorWidth, 1f)
@@ -243,7 +239,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         seperatorTextSize = ta.getDimension(R.styleable.TimeTableView_seperatorTextSize, sp2px(12f).toFloat())
         seperatorTextTopMargin = ta.getDimension(R.styleable.TimeTableView_seperatorTextTopMargin, dp2px(20f).toFloat())
         seperatorTextLeftMargin = ta.getDimension(R.styleable.TimeTableView_seperatorTextLeftMargin, dp2px(2f).toFloat())
-        currentTimeSecond = ta.getInt(R.styleable.TimeTableView_currentTime, 0)
+        currentTimeSecond = stringTimeToSecond(ta.getString(R.styleable.TimeTableView_currentTime) ?: "00:00")
         indicatorWidth = ta.getDimension(R.styleable.TimeTableView_indicatorLineWidth, dp2px(1f).toFloat())
         indicatorColor = ta.getColor(R.styleable.TimeTableView_indicatorLineColor, Color.RED)
         seperatorTextFontId = ta.getResourceId(R.styleable.TimeTableView_seperatorTextFontName, 0)
@@ -267,6 +263,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
             seperatorTextFont = ResourcesCompat.getFont(context, seperatorTextFontId)!!
             textPaint!!.typeface = seperatorTextFont
         }
+        textPaintMaxWidth = textPaint!!.measureText("00:00")
 
         scroller = Scroller(context)
 
@@ -429,7 +426,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     override fun onDraw(canvas: Canvas) {
 
-        canvas.drawColor(backgroundcolor)
+        canvas.drawColor(ColorBackground)
 
         drawRule(canvas)
 
@@ -493,7 +490,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
             val textEnd = formatTimeHHmm(timePart.end)
             canvas.drawText(
                     textEnd,
-                    end - textHalfWidth * 2 - textStartMargin,
+                    end - textPaintMaxWidth - textStartMargin,
                     heightView - seperatorTextTopMargin / 2,
                     textPaint!!
             )
@@ -722,10 +719,39 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     }
 
 
-    fun setCurrentTimeMinute(@FloatRange(from = 0.0, to = 24.0) currentTimeFloat: Float) {
+    fun setCurrentMinute(@FloatRange(from = 0.0, to = 24.0) currentTimeFloat: Float) {
         this.currentTimeSecond = currentTimeFloat.floatToSecond()
         currentPosition = currentTimeFloat
         postInvalidate()
+    }
+
+    private fun stringTimeToSecond(currentTime: String) : Int {
+        val array = currentTime.split(":")
+        val hour = array[0].toInt()
+        val minute = array[1].toInt()
+        return  (hour * 60 * 60) + (minute * 60)
+    }
+
+    /**
+     * send currentTime 01:23 format
+     * 00:00 to 23:59
+     */
+    fun setCurrentTime(currentTime: String) {
+        this.currentTimeSecond = stringTimeToSecond(currentTime)
+        currentPosition = this.currentTimeSecond.secondToFloat()
+        invalidate()
+    }
+
+    /**
+     * getting now time and setted as starter time
+     */
+    fun setCurrentTimeNow() {
+        val cal = Calendar.getInstance()
+        val sdf = SimpleDateFormat("HH:mm", Locale.US)
+        val time = sdf.format(cal.time)
+        this.currentTimeSecond = stringTimeToSecond(time)
+        currentPosition = this.currentTimeSecond.secondToFloat()
+        invalidate()
     }
 
     private fun formatTimeHHmm(@FloatRange(from = 0.0, to = 24.0) floatSecond: Float): String {
