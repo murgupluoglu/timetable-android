@@ -273,7 +273,7 @@ class MainActivity : AppCompatActivity() {
                     val rect = Rect()
                     timeTable.getHitRect(rect)
                     if(rect.contains(event.x.toInt(), event.y.toInt())) {
-                        timeTable.addTimePartForce(60.minuteToFloat(), event.x, iconName!!)
+                        timeTable.forceToAddTimePart(60, event.x, iconName!!)
                     }
                     dragEnded()
                 }
