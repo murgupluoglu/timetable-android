@@ -259,7 +259,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
         textPaint!!.textSize = seperatorTextSize
         textPaint!!.color = seperatorTextColor
-        if (seperatorTextFontId != 0 && !BuildConfig.DEBUG) {
+        if (seperatorTextFontId != 0 && !isInEditMode) {
             seperatorTextFont = ResourcesCompat.getFont(context, seperatorTextFontId)!!
             textPaint!!.typeface = seperatorTextFont
         }
@@ -591,7 +591,8 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     fun forceToAddTimePart(minuteLength: Int, posX: Float, iconName: String) {
 
-        val lengthFloat = minuteLength.minuteToFloat()
+        var lengthFloat = minuteLength.minuteToFloat()
+        if(lengthFloat < timePartMinFloat) lengthFloat = timePartMinFloat
         val timePart = TimePart()
         timePart.start = currentPosition + posX.pixelToFloat() - (lengthFloat / 2)
         timePart.end = timePart.start + lengthFloat
@@ -603,9 +604,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
 
         //logD("Original_ADD_PART ${formatTimeHHmm(timePart.start)}-${formatTimeHHmm(timePart.end)}")
-
-        if (checkAddPossible(timePart)) {
-            addTimePart(timePart)
+        if (addTimePart(timePart)) {
             return
         } else {
             logD("NOT_POSSIBLE_1")
@@ -614,13 +613,20 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         var prevIndex = -1
         for (i in 0 until timePartList.size) {
             val part = timePartList[i]
-            if (part.start < timePart.start && timePart.start < part.end) {
+            if (timePart.start > part.start && timePart.end < part.end) {
                 prevIndex = i
                 break
-            } else if (part.start < timePart.end && timePart.end < part.end) {
-                prevIndex = i - 1
+            } else if (timePart.start < part.start && timePart.end > part.start) {
+                val halfOfPartPos = part.start + (part.end - part.start) / 2
+                val posXFloat = posX.pixelToFloat()
+                if(posXFloat > halfOfPartPos){
+                    //Right Side
+                    prevIndex = if((i - 1) >= 0) (i -1) else 0
+                }else{
+                    prevIndex = (i - 1)
+                }
                 break
-            } else if (timePart.start < part.start && timePart.end > part.end) {
+            } else if (timePart.start < part.end && timePart.end > part.end) {
                 prevIndex = i
                 break
             }
@@ -650,7 +656,6 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         }
 
         val posSpace = totalEmptySpace + canMinusLeftPart + canMinusRightPart
-        val itemNeededSpace: Float = if (totalEmptySpace - 60.minuteToFloat() > 0) totalEmptySpace - 60.minuteToFloat() else 0f
         logD("possible_space ${formatTimeHHmm(posSpace)} float:$posSpace")
 
         if (timePartMinFloat > posSpace) {

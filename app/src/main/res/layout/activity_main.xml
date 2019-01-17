@@ -30,12 +30,11 @@
         app:layout_constraintTop_toBottomOf="@+id/textView"
         app:seperatorColor="#063443"
         app:seperatorTextColor="#ffffff"
-        app:seperatorTextFontName="@font/cherrycreamsoda_regular"
         app:seperatorTextSize="9sp"
         app:seperatorTextTopMargin="20dp"
         app:seperatorWidth="1dp"
         app:partColor="#8F2CFA"
-        app:currentTime="02:34"/>
+        app:currentTime="00:00"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"

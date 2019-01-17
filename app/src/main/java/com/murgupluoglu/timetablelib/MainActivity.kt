@@ -92,7 +92,7 @@ class MainActivity : AppCompatActivity() {
                 timeTable.addTimePart(part)
                 //timeTable.setCurrentMinute((60 * 3).minuteToFloat())
                 //timeTable.setCurrentTime("13:24")
-                timeTable.setCurrentTimeNow()
+                //timeTable.setCurrentTimeNow()
             }
 
             override fun onTimeChanged(newTimeValue: Int) {
