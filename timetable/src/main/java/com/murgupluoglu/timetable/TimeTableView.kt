@@ -27,9 +27,8 @@ import java.text.SimpleDateFormat
 class TimeTableView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
         View(context, attrs, defStyleAttr) {
 
-    fun getEmptyBitmap() : Bitmap {
-        val conf = Bitmap.Config.ARGB_8888
-        return Bitmap.createBitmap(centerImageSize, centerImageSize, conf)
+    fun getEmptyBitmap(): Bitmap {
+        return Bitmap.createBitmap(centerImageSize, centerImageSize, Bitmap.Config.ARGB_8888)
     }
 
     private var isInitialized = false
@@ -93,7 +92,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         fun initialized()
         fun onTimeChanged(newTimeValue: Int)
         fun onItemDeleted(timePart: TimePart, position: Int, isHovered: Boolean, posX: Float)
-        fun getItemBitmap(timePart: TimePart, position: Int) : Bitmap
+        fun getItemBitmap(timePart: TimePart, position: Int): Bitmap
     }
 
     private var timePartClickedPart: TimePartParts = TimePartParts.NOT_CLICKED
@@ -248,6 +247,8 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     }
 
     private fun init(context: Context) {
+        Log.i("TimeTableView", "initialized version name ${BuildConfig.VERSION_NAME}")
+
         paint = Paint(Paint.ANTI_ALIAS_FLAG)
         paint.color = seperatorColor
         paint.strokeWidth = seperatorWidth
@@ -503,7 +504,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
                 canvas.drawBitmap(
                         it,
                         Rect(0, 0, centerImageSize, centerImageSize),
-                        Rect(xStart.toInt(), yStart , ((xStart + centerImageSize).toInt()), yStart + centerImageSize),
+                        Rect(xStart.toInt(), yStart, ((xStart + centerImageSize).toInt()), yStart + centerImageSize),
                         paint
                 )
             }
@@ -534,7 +535,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         }
     }
 
-    fun addTimePart(timePart: TimePart) : Boolean {
+    fun addTimePart(timePart: TimePart): Boolean {
 
         if (checkAddPossible(timePart)) {
             Toast.makeText(context, "ADDED", Toast.LENGTH_SHORT).show()
@@ -569,30 +570,20 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         return isPossible
     }
 
-    fun addTimePartWithPosition(lengthFloat: Float, posX: Float, iconName: String) {
+    fun addTimePartWithPosition(lengthFloat: Float, posX: Float, iconName: String): Boolean {
 
         val timePart = TimePart()
         timePart.start = currentPosition + posX.pixelToFloat() - (lengthFloat / 2)
         timePart.end = timePart.start + lengthFloat
         timePart.centerImage = iconName
 
-        if (checkAddPossible(timePart)) {
-            timePartList.add(timePart)
-            sortList()
-        } else {
-            Toast.makeText(context, "NOT_POSSIBLE", Toast.LENGTH_SHORT).show()
-        }
-
-        timePartList.forEachIndexed { index, part ->
-            //logD(" ***$index*** \n $part \n *****")
-        }
-        invalidate()
+        return addTimePart(timePart)
     }
 
     fun forceToAddTimePart(minuteLength: Int, posX: Float, iconName: String) {
 
         var lengthFloat = minuteLength.minuteToFloat()
-        if(lengthFloat < timePartMinFloat) lengthFloat = timePartMinFloat
+        if (lengthFloat < timePartMinFloat) lengthFloat = timePartMinFloat
         val timePart = TimePart()
         timePart.start = currentPosition + posX.pixelToFloat() - (lengthFloat / 2)
         timePart.end = timePart.start + lengthFloat
@@ -619,10 +610,10 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
             } else if (timePart.start < part.start && timePart.end > part.start) {
                 val halfOfPartPos = part.start + (part.end - part.start) / 2
                 val posXFloat = posX.pixelToFloat()
-                if(posXFloat > halfOfPartPos){
+                if (posXFloat > halfOfPartPos) {
                     //Right Side
-                    prevIndex = if((i - 1) >= 0) (i -1) else 0
-                }else{
+                    prevIndex = if ((i - 1) >= 0) (i - 1) else 0
+                } else {
                     prevIndex = (i - 1)
                 }
                 break
@@ -718,22 +709,39 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         invalidate()
     }
 
+    /**
+     * @param minute send time as minute
+     * 01:23 = (1 * 60) + 23 => 73 min
+     */
+    fun setCurrentMinute(@IntRange(from = 0, to = (60 * 24)) minute: Int) {
+        this.currentTimeSecond = minute * 60
+        currentPosition = this.currentTimeSecond.secondToFloat()
+        postInvalidate()
+    }
 
-    fun setCurrentMinute(@FloatRange(from = 0.0, to = TIME_END_MAX.toDouble()) currentTimeFloat: Float) {
+    /**
+     * @param currentTimeFloat send time as Float
+     */
+    fun setCurrentFloat(@FloatRange(from = 0.0, to = TIME_END_MAX.toDouble()) currentTimeFloat: Float) {
         this.currentTimeSecond = currentTimeFloat.floatToSecond()
         currentPosition = currentTimeFloat
         postInvalidate()
     }
 
-    private fun stringTimeToSecond(currentTime: String) : Int {
+
+    /**
+     * @param currentTime expected as String like 01:23
+     * @return seconds
+     */
+    private fun stringTimeToSecond(currentTime: String): Int {
         val array = currentTime.split(":")
         val hour = array[0].toInt()
         val minute = array[1].toInt()
-        return  (hour * 60 * 60) + (minute * 60)
+        return (hour * 60 * 60) + (minute * 60)
     }
 
     /**
-     * send currentTime 01:23 format
+     * @param currentTime expected as String like 01:23 format
      * 00:00 to 23:59
      */
     fun setCurrentTime(currentTime: String) {
@@ -754,23 +762,6 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         invalidate()
     }
 
-    private fun formatTimeHHmm(@FloatRange(from = 0.0, to = 24.0) floatSecond: Float): String {
-
-        val hour = floatSecond.toInt()
-        val minute = TimeUnit.SECONDS.toMinutes((floatSecond - hour).floatToSecond().toLong())
-
-        val sb = StringBuilder()
-        if (hour < 10) {
-            sb.append('0')
-        }
-        sb.append(hour).append(':')
-        if (minute < 10) {
-            sb.append('0')
-        }
-        sb.append(minute)
-        return sb.toString()
-    }
-
     private fun Float.floatToPixel(): Float {
         return heightView * this
     }
@@ -780,11 +771,13 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     }
 
     companion object {
+
         /**
          * seconds x min x hour = 1 day
          * 60 x 60 x 24 = 86400 seconds
          */
         const val MAX_TIME_VALUE: Int = 60 * 60 * 24
+
         /**
          * Our parts 1 hour long, 1 hour = 3600 seconds
          * 1 / 3600 = 0.000277777777778
@@ -798,6 +791,29 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         const val TIME_END_MAX = 23.999999f
     }
 
+}
+
+/**
+ * 1 hour = 1f , If you send 1.384f
+ * its will be equal to 01:23
+ * @param floatSecond getting float second
+ * @return returning String HH:mm format
+ */
+fun formatTimeHHmm(@FloatRange(from = 0.0, to = 24.0) floatSecond: Float): String {
+
+    val hour = floatSecond.toInt()
+    val minute = TimeUnit.SECONDS.toMinutes((floatSecond - hour).floatToSecond().toLong())
+
+    val sb = StringBuilder()
+    if (hour < 10) {
+        sb.append('0')
+    }
+    sb.append(hour).append(':')
+    if (minute < 10) {
+        sb.append('0')
+    }
+    sb.append(minute)
+    return sb.toString()
 }
 
 fun Int.secondToFloat(): Float {

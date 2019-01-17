@@ -90,9 +90,10 @@ class MainActivity : AppCompatActivity() {
                 part.centerImage = "ic_android_24dp"
 
                 timeTable.addTimePart(part)
-                //timeTable.setCurrentMinute((60 * 3).minuteToFloat())
-                //timeTable.setCurrentTime("13:24")
+                //timeTable.setCurrentFloat((60 * 3).minuteToFloat())
+                timeTable.setCurrentTime("01:00")
                 //timeTable.setCurrentTimeNow()
+                //timeTable.setCurrentMinute(73)
             }
 
             override fun onTimeChanged(newTimeValue: Int) {
