@@ -794,8 +794,8 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 }
 
 /**
- * 1 hour = 1f , If you send 1.384f
- * its will be equal to 01:23
+ * 1 hour = 1f , 23 min = 60 / 23 = 0.384f
+ * If you send 1.384f its will be equal to 01:23
  * @param floatSecond getting float second
  * @return returning String HH:mm format
  */
