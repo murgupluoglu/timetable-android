@@ -38,12 +38,12 @@ import kotlinx.android.synthetic.main.button_layout.view.*
 class MainActivity : AppCompatActivity() {
 
     companion object {
-        lateinit var shadowBuilder : View.DragShadowBuilder
+        lateinit var shadowBuilder: View.DragShadowBuilder
     }
 
     val TAG = "MainActivity"
 
-    val myDataset: ArrayList<RecyclerViewItem> = ArrayList()
+    val items: ArrayList<RecyclerViewItem> = ArrayList()
 
     var shadowBottomMargin = 0f
 
@@ -55,16 +55,16 @@ class MainActivity : AppCompatActivity() {
 
 
         timeTable.isLogEnabled = BuildConfig.DEBUG
-        timeTable.timeTableListener = object : TimeTableView.TimeTableListener{
+        timeTable.timeTableListener = object : TimeTableView.TimeTableListener {
 
-            override fun getItemBitmap(timePart: TimeTableView.TimePart, position: Int) : Bitmap {
+            override fun getItemBitmap(timePart: TimeTableView.TimePart, position: Int): Bitmap {
                 val resId = resources.getIdentifier(timePart.centerImage, "drawable", packageName)
                 //val drawable = ContextCompat.getDrawable(this@MainActivity, resId)
                 //var drawable : Drawable? = Drawable.createFromPath(timePart.centerImage)
 
                 var bitmap = timeTable.getEmptyBitmap()
 
-                if(URLUtil.isValidUrl(timePart.centerImage)){
+                if (URLUtil.isValidUrl(timePart.centerImage)) {
                     Glide.with(this@MainActivity)
                             .asBitmap()
                             .load(timePart.centerImage)
@@ -75,8 +75,8 @@ class MainActivity : AppCompatActivity() {
                                     bitmap = resource
                                 }
                             })
-                }else{
-                     bitmap = getBitmapFromVectorDrawable(this@MainActivity, resId)
+                } else {
+                    bitmap = getBitmapFromVectorDrawable(this@MainActivity, resId)
                 }
 
                 return bitmap
@@ -114,7 +114,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        myDataset.addAll(getFakeData())
+        items.addAll(getFakeData())
 
 
         val flexboxLayoutManager = FlexboxLayoutManager(this).apply {
@@ -126,12 +126,12 @@ class MainActivity : AppCompatActivity() {
         recyclerView.apply {
             setHasFixedSize(true)
             layoutManager = flexboxLayoutManager
-            adapter = MyAdapter(myDataset, object : MyAdapterClickLister{
+            adapter = MyAdapter(items, object : MyAdapterClickLister {
                 override fun onClicked(position: Int, textView: TextView) {
-                    startDrag(textView, myDataset[position].iconName)
+                    startDrag(textView, items[position].iconName)
                     textView.visibility = View.INVISIBLE
 
-                    Log.e(TAG, "LONG_CLICKED iconName ${myDataset[position].iconName}")
+                    Log.e(TAG, "LONG_CLICKED iconName ${items[position].iconName}")
                 }
             })
         }
@@ -141,19 +141,19 @@ class MainActivity : AppCompatActivity() {
         //timeTable.setOnDragListener(TimeTableDragListener())
     }
 
-    fun getBitmapFromVectorDrawable(context : Context, drawableId : Int) : Bitmap {
-    var drawable = ContextCompat.getDrawable(context, drawableId)
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-        drawable = (DrawableCompat.wrap(drawable!!)).mutate()
+    fun getBitmapFromVectorDrawable(context: Context, drawableId: Int): Bitmap {
+        var drawable = ContextCompat.getDrawable(context, drawableId)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            drawable = (DrawableCompat.wrap(drawable!!)).mutate()
+        }
+
+        val bitmap = Bitmap.createBitmap(drawable!!.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        drawable.setBounds(0, 0, canvas.width, canvas.height)
+        drawable.draw(canvas)
+
+        return bitmap;
     }
-
-    val bitmap = Bitmap.createBitmap(drawable!!.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-    drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight())
-    drawable.draw(canvas)
-
-    return bitmap;
-}
 
     fun createLayout(posX: Float, posY: Float, iconName: String): View {
         val inflater = LayoutInflater.from(this@MainActivity)
@@ -174,24 +174,24 @@ class MainActivity : AppCompatActivity() {
         return view
     }
 
-    fun startDrag(view : View, iconName: String){
+    fun startDrag(view: View, iconName: String) {
         val clipData = ClipData.newPlainText(iconName, iconName)
         shadowBuilder = EmptyDragShadowBuilder(view)
 
-        val flag = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) DRAG_FLAG_OPAQUE else 0
+        val flag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) DRAG_FLAG_OPAQUE else 0
         ViewCompat.startDragAndDrop(view, clipData, shadowBuilder, view, flag)
     }
 
-    fun moveShadow(posX : Float, posY : Float, iconName : String){
+    fun moveShadow(posX: Float, posY: Float, iconName: String) {
 
-        var rootShadowLayout : RelativeLayout? = rootConstraintLayout.findViewById(R.id.rootShadowLayout)
+        var rootShadowLayout: RelativeLayout? = rootConstraintLayout.findViewById(R.id.rootShadowLayout)
 
-        if(rootShadowLayout == null)
+        if (rootShadowLayout == null)
             rootShadowLayout = createLayout(posX, posY, iconName) as RelativeLayout
 
         val textView = rootShadowLayout.findViewById<TextView>(R.id.nameTextView)
 
-        if(URLUtil.isValidUrl(iconName)){
+        if (URLUtil.isValidUrl(iconName)) {
             Glide.with(this@MainActivity)
                     .asBitmap()
                     .load(iconName)
@@ -202,7 +202,7 @@ class MainActivity : AppCompatActivity() {
                             textView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null)
                         }
                     })
-        }else{
+        } else {
             val resId = resources.getIdentifier(iconName, "drawable", packageName)
             val drawable = ContextCompat.getDrawable(this@MainActivity, resId)!!
             textView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null)
@@ -211,13 +211,13 @@ class MainActivity : AppCompatActivity() {
 
 
         rootShadowLayout.visibility = View.VISIBLE
-        rootShadowLayout.x = posX - shadowBottomMargin/3
+        rootShadowLayout.x = posX - shadowBottomMargin / 3
         rootShadowLayout.y = posY - shadowBottomMargin
     }
 
-    fun dragEnded(){
-        val rootShadowLayout : RelativeLayout? = rootConstraintLayout.findViewById(R.id.rootShadowLayout)
-        if(rootShadowLayout != null){
+    fun dragEnded() {
+        val rootShadowLayout: RelativeLayout? = rootConstraintLayout.findViewById(R.id.rootShadowLayout)
+        if (rootShadowLayout != null) {
             rootConstraintLayout.removeView(rootShadowLayout)
         }
     }
@@ -227,7 +227,7 @@ class MainActivity : AppCompatActivity() {
         return dp * density
     }
 
-    fun getFakeData() : ArrayList<RecyclerViewItem>{
+    fun getFakeData(): ArrayList<RecyclerViewItem> {
         val array = ArrayList<RecyclerViewItem>()
         array.add(RecyclerViewItem("https://img.icons8.com/metro/1600/search.png", "Link Icon"))
         array.add(RecyclerViewItem("ic_peanut", "Peanut"))
@@ -251,12 +251,12 @@ class MainActivity : AppCompatActivity() {
         override fun onDrag(v: View, event: DragEvent): Boolean {
             val returnedDraggedView = event.localState as TextView
 
-            var iconName : String? = null
-            if(event.clipDescription != null){
+            var iconName: String? = null
+            if (event.clipDescription != null) {
                 iconName = event.clipDescription.label.toString()
             }
 
-            if(iconName != null)
+            if (iconName != null)
                 moveShadow(event.x, event.y, iconName)
 
             val action = event.action
@@ -273,7 +273,7 @@ class MainActivity : AppCompatActivity() {
 
                     val rect = Rect()
                     timeTable.getHitRect(rect)
-                    if(rect.contains(event.x.toInt(), event.y.toInt())) {
+                    if (rect.contains(event.x.toInt(), event.y.toInt())) {
                         timeTable.forceToAddTimePart(60, event.x, iconName!!)
                     }
                     dragEnded()

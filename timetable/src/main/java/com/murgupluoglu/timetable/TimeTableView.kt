@@ -238,7 +238,8 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         seperatorTextSize = ta.getDimension(R.styleable.TimeTableView_seperatorTextSize, sp2px(12f).toFloat())
         seperatorTextTopMargin = ta.getDimension(R.styleable.TimeTableView_seperatorTextTopMargin, dp2px(20f).toFloat())
         seperatorTextLeftMargin = ta.getDimension(R.styleable.TimeTableView_seperatorTextLeftMargin, dp2px(2f).toFloat())
-        currentTimeSecond = stringTimeToSecond(ta.getString(R.styleable.TimeTableView_currentTime) ?: "00:00")
+        currentTimeSecond = stringTimeToSecond(ta.getString(R.styleable.TimeTableView_currentTime)
+                ?: "00:00")
         indicatorWidth = ta.getDimension(R.styleable.TimeTableView_indicatorLineWidth, dp2px(1f).toFloat())
         indicatorColor = ta.getColor(R.styleable.TimeTableView_indicatorLineColor, Color.RED)
         seperatorTextFontId = ta.getResourceId(R.styleable.TimeTableView_seperatorTextFontName, 0)
@@ -429,7 +430,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
         canvas.drawColor(ColorBackground)
 
-        drawRule(canvas)
+        drawBackground(canvas)
 
         drawTimeParts(canvas)
     }
@@ -443,7 +444,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     }
 
 
-    private fun drawRule(canvas: Canvas) {
+    private fun drawBackground(canvas: Canvas) {
 
         paint.color = seperatorColor
         paint.strokeWidth = seperatorWidth
@@ -538,7 +539,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     fun addTimePart(timePart: TimePart): Boolean {
 
         if (checkAddPossible(timePart)) {
-            Toast.makeText(context, "ADDED", Toast.LENGTH_SHORT).show()
+            //Toast.makeText(context, "ADDED", Toast.LENGTH_SHORT).show()
             logD("ADDED")
             timePartList.add(timePart)
             sortList()
@@ -553,7 +554,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     fun checkAddPossible(timePart: TimePart): Boolean {
         var isPossible = true
-        if (timePart.start < 0.0 || timePart.end >= 24.0) {
+        if (timePart.start < 0.0 || timePart.end >= 24.0 || timePart.start > timePart.end) {
             isPossible = false
         }
         logD("timePartList.size ${timePartList.size}")
