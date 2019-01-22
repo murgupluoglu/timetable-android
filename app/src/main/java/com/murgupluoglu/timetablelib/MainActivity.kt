@@ -56,6 +56,10 @@ class MainActivity : AppCompatActivity() {
 
         timeTable.isLogEnabled = BuildConfig.DEBUG
         timeTable.timeTableListener = object : TimeTableView.TimeTableListener {
+            override fun onItemChanged(timePart: TimeTableView.TimePart) {
+
+            }
+
             override fun onItemAdded(timePart: TimeTableView.TimePart) {
                 val iconName = timePart.additionalInfo!! as String
                 if (URLUtil.isValidUrl(iconName)) {

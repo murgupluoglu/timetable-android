@@ -93,6 +93,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         fun initialized()
         fun onTimeChanged(newTimeValue: Int)
         fun onItemAdded(timePart: TimePart)
+        fun onItemChanged(timePart: TimePart)
         fun onItemDeleted(timePart: TimePart, position: Int, isHovered: Boolean, posX: Float)
     }
 
@@ -402,18 +403,21 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
                 if (startPositionFloat >= 0.0 && endPositionFloat < 24.0) {
                     timePartList[clickedTimePartIndex].start = startPositionFloat
                     timePartList[clickedTimePartIndex].end = endPositionFloat
+                    timeTableListener?.onItemChanged(timePart)
                 }
             }
             TimePartParts.LEFT_HANDLE -> {
                 val minWidthDiff = timePart.end - startPositionFloat
                 if (startPositionFloat >= 0.0 && minWidthDiff >= timePartMinFloat) {
                     timePartList[clickedTimePartIndex].start = startPositionFloat
+                    timeTableListener?.onItemChanged(timePart)
                 }
             }
             TimePartParts.RIGHT_HANDLE -> {
                 val minWidthDiff = endPositionFloat - timePart.start
                 if (endPositionFloat < 24.0 && minWidthDiff >= timePartMinFloat) {
                     timePartList[clickedTimePartIndex].end = endPositionFloat
+                    timeTableListener?.onItemChanged(timePart)
                 }
             }
             else -> {
@@ -663,12 +667,14 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         if (timePartMinFloat > posSpace) {
             logD("replace")
             if (prevPart != null) {
+                timeTableListener?.onItemDeleted(prevPart, prevIndex, false, -1f)
                 timePartList.remove(prevPart)
                 timePart.start = prevPart.start
                 timePart.end = prevPart.end
                 prevPart = null
                 nextIndex--
             } else if (nextPart != null) {
+                timeTableListener?.onItemDeleted(nextPart, nextIndex, false, -1f)
                 timePartList.remove(nextPart)
                 timePart.start = nextPart.start
                 timePart.end = nextPart.end
@@ -687,6 +693,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
                     timePartList[prevIndex].end = prevPart.start + timePartMinFloat
                     timePart.start = timePartList[prevIndex].end
                 }
+                timeTableListener?.onItemChanged(timePartList[prevIndex])
             }
         }
 
@@ -701,6 +708,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
                     timePartList[nextIndex].start = nextPart.end - timePartMinFloat
                     timePart.end = timePartList[nextIndex].start
                 }
+                timeTableListener?.onItemChanged(timePartList[nextIndex])
             }
         }
 
@@ -771,6 +779,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         this.currentTimeSecond = stringTimeToSecond(time)
         currentPosition = this.currentTimeSecond.secondToFloat()
         invalidate()
+        //TODO("add check safety")
     }
 
     private fun Float.floatToPixel(): Float {
