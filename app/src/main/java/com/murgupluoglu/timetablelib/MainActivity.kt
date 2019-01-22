@@ -56,30 +56,32 @@ class MainActivity : AppCompatActivity() {
 
         timeTable.isLogEnabled = BuildConfig.DEBUG
         timeTable.timeTableListener = object : TimeTableView.TimeTableListener {
-
-            override fun getItemBitmap(timePart: TimeTableView.TimePart, position: Int): Bitmap {
-                val resId = resources.getIdentifier(timePart.centerImage, "drawable", packageName)
-                //val drawable = ContextCompat.getDrawable(this@MainActivity, resId)
-                //var drawable : Drawable? = Drawable.createFromPath(timePart.centerImage)
-
-                var bitmap = timeTable.getEmptyBitmap()
-
-                if (URLUtil.isValidUrl(timePart.centerImage)) {
+            override fun onItemAdded(timePart: TimeTableView.TimePart) {
+                val iconName = timePart.additionalInfo!! as String
+                if (URLUtil.isValidUrl(iconName)) {
                     Glide.with(this@MainActivity)
                             .asBitmap()
-                            .load(timePart.centerImage)
+                            .load(iconName)
                             .into(object : SimpleTarget<Bitmap>(ConvertUtils.dp2px(24f), ConvertUtils.dp2px(24f)) {
                                 override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-                                    //val drawable = BitmapDrawable(resources, resource)
-                                    //DrawableCompat.setTint(drawable, Color.WHITE)
-                                    bitmap = resource
+                                    timeTable.timePartList.forEach {
+                                        if(it.additionalInfo!! as String == iconName){
+                                            it.centerBitmap = resource
+                                        }
+                                    }
+                                    timeTable.invalidate()
                                 }
                             })
                 } else {
-                    bitmap = getBitmapFromVectorDrawable(this@MainActivity, resId)
+                    val resId = resources.getIdentifier(iconName, "drawable", packageName)
+                    val bitmap = getBitmapFromVectorDrawable(this@MainActivity, resId)
+                    timeTable.timePartList.forEach {
+                        if(it.additionalInfo!! as String == iconName){
+                            it.centerBitmap = bitmap
+                        }
+                    }
+                    timeTable.invalidate()
                 }
-
-                return bitmap
             }
 
             override fun initialized() {
@@ -87,7 +89,9 @@ class MainActivity : AppCompatActivity() {
                 val part = TimeTableView.TimePart()
                 part.start = 0.minuteToFloat()
                 part.end = part.start + 60.minuteToFloat()
-                part.centerImage = "ic_android_24dp"
+                val resId = resources.getIdentifier("ic_android_24dp", "drawable", packageName)
+                part.centerBitmap = getBitmapFromVectorDrawable(this@MainActivity, resId)
+                part.additionalInfo = "ic_android_24dp"
 
                 timeTable.addTimePart(part)
                 //timeTable.setCurrentFloat((60 * 3).minuteToFloat())
@@ -104,8 +108,8 @@ class MainActivity : AppCompatActivity() {
                 Log.e("ON_ITEM_DELETED", "position $position isHovered $isHovered")
                 val x = posX
                 val y = timeTable.y / 2
-                val iconName = timePart.centerImage!!
-                Log.e("ON_ITEM_DELETED", "x:$x y:$y iconName:$iconName")
+                val iconName = timePart.additionalInfo!! as String
+                Log.e("ON_ITEM_DELETED", "x:$x y:$y iconLink:$iconName")
                 moveShadow(x, y, iconName)
 
                 val rootShadowLayout = createLayout(x, y, iconName) as RelativeLayout
@@ -138,7 +142,6 @@ class MainActivity : AppCompatActivity() {
 
 
         rootConstraintLayout.setOnDragListener(MyDragListener())
-        //timeTable.setOnDragListener(TimeTableDragListener())
     }
 
     fun getBitmapFromVectorDrawable(context: Context, drawableId: Int): Bitmap {
@@ -274,7 +277,7 @@ class MainActivity : AppCompatActivity() {
                     val rect = Rect()
                     timeTable.getHitRect(rect)
                     if (rect.contains(event.x.toInt(), event.y.toInt())) {
-                        timeTable.forceToAddTimePart(60, event.x, iconName!!)
+                        timeTable.forceToAddTimePart(60, event.x, null, iconName)
                     }
                     dragEnded()
                 }

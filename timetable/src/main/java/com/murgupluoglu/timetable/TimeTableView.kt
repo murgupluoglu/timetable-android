@@ -7,17 +7,17 @@ import android.text.TextPaint
 import android.util.AttributeSet
 import android.util.Log
 import android.util.TypedValue
-import android.view.*
+import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
+import android.view.MotionEvent
+import android.view.View
 import android.widget.Scroller
-import android.widget.Toast
 import androidx.annotation.FloatRange
 import androidx.annotation.IntRange
 import androidx.core.content.res.ResourcesCompat
+import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
-import android.graphics.Bitmap
-import java.text.SimpleDateFormat
 
 
 /**
@@ -71,7 +71,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     private var indicatorWidth: Float = 0.toFloat()
 
     /**
-     * Distance between current time and 00:00
+     * Distance between 00:00 and current time
      */
     private var currentPosition: Float = 0f
     private var maxTimePixel: Float = 0f
@@ -85,15 +85,15 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     private var heightView: Int = 0
 
     private var clickedTimePartIndex: Int = 0
-    private var timePartList: LinkedList<TimePart> = LinkedList()
+    var timePartList: LinkedList<TimePart> = LinkedList()
 
     var timeTableListener: TimeTableListener? = null
 
     interface TimeTableListener {
         fun initialized()
         fun onTimeChanged(newTimeValue: Int)
+        fun onItemAdded(timePart: TimePart)
         fun onItemDeleted(timePart: TimePart, position: Int, isHovered: Boolean, posX: Float)
-        fun getItemBitmap(timePart: TimePart, position: Int): Bitmap
     }
 
     private var timePartClickedPart: TimePartParts = TimePartParts.NOT_CLICKED
@@ -131,12 +131,17 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         /**
          * Center image 24x24
          */
-        var centerImage: String? = null
+        var centerBitmap: Bitmap? = null
+
+        /**
+         * Extra information for your usage
+         */
+        var additionalInfo: Any? = null
 
         override fun toString(): String {
             return "start ${start.floatToSecond()} \n" +
                     "end ${end.floatToSecond()} \n" +
-                    "image $centerImage"
+                    "image $centerBitmap"
         }
     }
 
@@ -500,7 +505,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
 
             //draw center image
-            timeTableListener?.getItemBitmap(timePart, index)?.let {
+            timePart.centerBitmap?.let {
                 val xStart = start + (end - start) / 2 - centerImageSize / 2
                 val yStart = heightView / 2 - centerImageSize / 2
                 canvas.drawBitmap(
@@ -545,6 +550,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
             timePartList.add(timePart)
             sortList()
             invalidate()
+            timeTableListener?.onItemAdded(timePart)
             return true
         } else {
             logD("NOT_POSSIBLE_ADDTIMEPART")
@@ -562,7 +568,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         logD("timePartList.size ${timePartList.size}")
         logD("timePartList s${formatTimeHHmm(timePart.start)}e${formatTimeHHmm(timePart.end)}")
         timePartList.forEach {
-            logD("${it.centerImage} s${formatTimeHHmm(it.start)}e${formatTimeHHmm(it.end)}")
+            logD("${it.additionalInfo} s${formatTimeHHmm(it.start)}e${formatTimeHHmm(it.end)}")
             if (it.start < timePart.start && timePart.start < it.end
                     || it.start < timePart.end && timePart.end < it.end
                     || timePart.start < it.start && timePart.end > it.end) {
@@ -573,24 +579,26 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         return isPossible
     }
 
-    fun addTimePartWithPosition(lengthFloat: Float, posX: Float, iconName: String): Boolean {
+    fun addTimePartWithPosition(lengthFloat: Float, posX: Float, centerBitmap: Bitmap?, additionalInfo: Any?): Boolean {
 
         val timePart = TimePart()
         timePart.start = currentPosition + posX.pixelToFloat() - (lengthFloat / 2)
         timePart.end = timePart.start + lengthFloat
-        timePart.centerImage = iconName
+        timePart.centerBitmap = centerBitmap
+        timePart.additionalInfo = additionalInfo
 
         return addTimePart(timePart)
     }
 
-    fun forceToAddTimePart(minuteLength: Int, posX: Float, iconName: String) {
+    fun forceToAddTimePart(minuteLength: Int, posX: Float, centerBitmap: Bitmap?, additionalInfo: Any?) {
 
         var lengthFloat = minuteLength.minuteToFloat()
         if (lengthFloat < timePartMinFloat) lengthFloat = timePartMinFloat
         val timePart = TimePart()
         timePart.start = currentPosition + posX.pixelToFloat() - (lengthFloat / 2)
         timePart.end = timePart.start + lengthFloat
-        timePart.centerImage = iconName
+        timePart.centerBitmap = centerBitmap
+        timePart.additionalInfo = additionalInfo
 
 
         if (timePart.start < 0.0) timePart.start = 0f
@@ -830,4 +838,3 @@ fun Int.minuteToFloat(): Float {
 fun Float.floatToSecond(): Int {
     return (this / TimeTableView.FLOAT_CONSTANT).toInt()
 }
-
