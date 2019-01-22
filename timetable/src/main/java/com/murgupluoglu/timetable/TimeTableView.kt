@@ -51,6 +51,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
      */
     var timePartMinFloat: Float = 24.minuteToFloat()
 
+    //TODO("Add bridge with xml to code for parameters")
     //Handles
     lateinit var handlesPaint: Paint
     private var handlesWidth: Int = dp2px(4f)
@@ -556,6 +557,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         var isPossible = true
         if (timePart.start < 0.0 || timePart.end >= 24.0 || timePart.start > timePart.end) {
             isPossible = false
+            return isPossible
         }
         logD("timePartList.size ${timePartList.size}")
         logD("timePartList s${formatTimeHHmm(timePart.start)}e${formatTimeHHmm(timePart.end)}")
@@ -610,10 +612,10 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
                 break
             } else if (timePart.start < part.start && timePart.end > part.start) {
                 val halfOfPartPos = part.start + (part.end - part.start) / 2
-                val posXFloat = posX.pixelToFloat()
+                val posXFloat = posX.pixelToFloat() + currentPosition
                 if (posXFloat > halfOfPartPos) {
                     //Right Side
-                    prevIndex = if ((i - 1) >= 0) (i - 1) else 0
+                    prevIndex = i
                 } else {
                     prevIndex = (i - 1)
                 }
@@ -695,7 +697,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         }
 
 
-        logD("Modifyed_ADD_PART ${formatTimeHHmm(timePart.start)}-${formatTimeHHmm(timePart.end)}")
+        logD("Modified_ADD_PART ${formatTimeHHmm(timePart.start)}-${formatTimeHHmm(timePart.end)}")
         addTimePart(timePart)
     }
 
