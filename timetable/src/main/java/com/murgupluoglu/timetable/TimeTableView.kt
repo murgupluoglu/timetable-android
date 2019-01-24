@@ -24,13 +24,15 @@ import android.animation.ValueAnimator
 /**
  * Mustafa Urgupluoglu
  * Date 22/10/2018
+ *
+ * Using @param heightView for time-part width
+ * Than -> 1 * heightView(pixel) = 1f = (3600 * FLOAT_CONSTANT)
+ * If your screen width = 1080(pixel) and view height = 390(pixel)
+ * Than -> 1 Hour = 1f = 390(pixel)
+ * 23 minute -> 0.384f = 390 x 0.384f = 149(pixel)
  */
 class TimeTableView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
         View(context, attrs, defStyleAttr) {
-
-    fun getEmptyBitmap(): Bitmap {
-        return Bitmap.createBitmap(centerImageSize, centerImageSize, Bitmap.Config.ARGB_8888)
-    }
 
     private var isInitialized = false
     var isLogEnabled = false
@@ -150,7 +152,6 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     private val gestureDetector: GestureDetector = GestureDetector(context, object : SimpleOnGestureListener() {
 
         override fun onDown(event: MotionEvent): Boolean {
-            logD("onDown ${event.x.toInt()}")
             waitScroll = System.currentTimeMillis()
             scroller.abortAnimation()
 
@@ -175,24 +176,17 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
                 when (xPosFloat) {
                     in handleStartPixel..handleEndPixel -> {
                         timePartClickedPart = TimePartParts.CENTER
-                        //logD("Clicked Center")
-                        //Toast.makeText(context, "Clicked Center", Toast.LENGTH_SHORT).show()
                     }
                     in (startPixel)..handleStartPixel -> {
                         timePartClickedPart = TimePartParts.LEFT_HANDLE
-                        //logD("Clicked LeftHandle")
-                        //Toast.makeText(context, "Clicked LeftHandle", Toast.LENGTH_SHORT).show()
                     }
                     in handleEndPixel..(endPixel) -> {
                         timePartClickedPart = TimePartParts.RIGHT_HANDLE
-                        //logD("Clicked RightHandle")
-                        //Toast.makeText(context, "Clicked RightHandle", Toast.LENGTH_SHORT).show()
                     }
                 }
 
                 if (xPosFloat in (startPixel)..(endPixel)) {
                     clickedTimePartIndex = index
-                    //logD("clickedTimePartIndex $clickedTimePartIndex")
                 }
             }
 
@@ -200,7 +194,6 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         }
 
         override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
-            //logD("onScroll timePartClickedPart:$timePartClickedPart currentMoveAction:$currentMoveAction")
 
             if (currentMoveAction != MoveActions.MOVING) {
                 currentMoveAction = MoveActions.SCROLLING
@@ -211,7 +204,6 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         }
 
         override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float): Boolean {
-            //logD("onFling currentMoveAction:$currentMoveAction")
             if (currentMoveAction != MoveActions.MOVING) {
                 currentMoveAction = MoveActions.SCROLLING
                 scroller.forceFinished(true)
@@ -299,7 +291,6 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        //logD("onTouchEvent $event")
 
         gestureDetector.onTouchEvent(event).apply {
             restStatusByAction(event)
@@ -319,13 +310,10 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         when (action) {
             MotionEvent.ACTION_MOVE -> {
                 val diffX = lastX - event.x
-                //val diffXAbs = Math.abs(diffX)
                 val diffWithFirstX = Math.abs(firstTouchX - event.x)
                 val diffWithFirstY = Math.abs(firstTouchY - event.y)
-                //logD("diffWithFirst $diffWithFirstX")
 
                 if (lastX != 0f && System.currentTimeMillis() - waitScroll > 100) {
-                    //logD("ACTION_MOVE currentMoveAction $currentMoveAction diffXAbs $diffXAbs")
                     val distanceXFloat = diffX.pixelToFloat()
 
                     when (timePartClickedPart) {
@@ -338,7 +326,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
                                 if (currentMoveAction == MoveActions.MOVING || diffWithFirstX > 15) {
                                     moveTimePart(distanceXFloat)
                                 } else if (diffWithFirstY > 15) {
-                                    //logD("HOVERED")
+                                    //HOVERED
                                     currentMoveAction = MoveActions.HOVERED
                                     timeTableListener?.apply {
                                         onItemDeleted(timePartList.get(clickedTimePartIndex), clickedTimePartIndex, true, currentPosition.floatToPixel() % widthView)
@@ -367,14 +355,11 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
 
     private fun moveTimePart(distanceXFloat: Float) {
-        //logD("moveTimePart")
         currentMoveAction = MoveActions.MOVING
 
         val timePart = timePartList[clickedTimePartIndex]
         val startPositionFloat = timePart.start - distanceXFloat
         val endPositionFloat = timePart.end - distanceXFloat
-
-        //logD("distanceXFloat $distanceXFloat startPositionFloat $startPositionFloat")
 
         var isPossible = true
         //check left and right time-parts if exist
@@ -397,7 +382,6 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
             }
         }
 
-        //logD("isPossible $isPossible")
         if (!isPossible) return
         when (timePartClickedPart) {
             TimePartParts.CENTER -> {
@@ -429,7 +413,6 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     private fun computeTime() {
         currentPosition = Math.min(maxTimePixel.pixelToFloat(), Math.max(0f, currentPosition))
-        //logD("currentPosition $currentPosition maxTimePixel $maxTimePixel")
         currentTimeSecond = currentPosition.floatToSecond()
         if (timeTableListener != null) {
             timeTableListener!!.onTimeChanged(currentTimeSecond)
@@ -447,7 +430,6 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     }
 
     override fun computeScroll() {
-        //logD("computeScroll")
         if (currentMoveAction != MoveActions.MOVING && scroller.computeScrollOffset()) {
             currentPosition = scroller.currX.toFloat().pixelToFloat()
             computeTime()
@@ -608,10 +590,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
             isPossible = false
             return isPossible
         }
-        logD("timePartList.size ${timePartList.size}")
-        logD("timePartList s${formatTimeHHmm(timePart.start)}e${formatTimeHHmm(timePart.end)}")
         timePartList.forEach {
-            logD("${it.additionalInfo} s${formatTimeHHmm(it.start)}e${formatTimeHHmm(it.end)}")
             if (it.start < timePart.start && timePart.start < it.end
                     || it.start < timePart.end && timePart.end < it.end
                     || timePart.start < it.start && timePart.end > it.end) {
@@ -652,7 +631,6 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         if (timePart.end >= 24.0) timePart.end = TIME_END_MAX
 
 
-        //logD("Original_ADD_PART ${formatTimeHHmm(timePart.start)}-${formatTimeHHmm(timePart.end)}")
         if (addTimePart(timePart, withAnimation)) {
             return
         } else {
@@ -844,6 +822,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         /**
          * Our parts 1 hour long, 1 hour = 3600 seconds
          * 1 / 3600 = 0.000277777777778
+         * 1 second equals this float number inside view
          */
         const val FLOAT_CONSTANT = 0.000277777777778f
 
