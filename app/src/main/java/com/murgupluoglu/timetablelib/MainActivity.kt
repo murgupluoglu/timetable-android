@@ -97,9 +97,9 @@ class MainActivity : AppCompatActivity() {
                 part.centerBitmap = getBitmapFromVectorDrawable(this@MainActivity, resId)
                 part.additionalInfo = "ic_android_24dp"
 
-                timeTable.addTimePart(part)
+                timeTable.addTimePart(part, true)
                 //timeTable.setCurrentFloat((60 * 3).minuteToFloat())
-                timeTable.setCurrentTime("01:00")
+                //timeTable.setCurrentTime("01:00")
                 //timeTable.setCurrentTimeNow()
                 //timeTable.setCurrentMinute(73)
             }
@@ -281,7 +281,7 @@ class MainActivity : AppCompatActivity() {
                     val rect = Rect()
                     timeTable.getHitRect(rect)
                     if (rect.contains(event.x.toInt(), event.y.toInt())) {
-                        timeTable.forceToAddTimePart(60, event.x, null, iconName)
+                        timeTable.forceToAddTimePart(60, event.x, null, iconName, true)
                     }
                     dragEnded()
                 }

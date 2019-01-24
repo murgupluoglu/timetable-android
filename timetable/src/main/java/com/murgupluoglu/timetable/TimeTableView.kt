@@ -1,5 +1,6 @@
 package com.murgupluoglu.timetable
 
+import android.animation.Animator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
@@ -18,7 +19,7 @@ import androidx.core.content.res.ResourcesCompat
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
-
+import android.animation.ValueAnimator
 
 /**
  * Mustafa Urgupluoglu
@@ -142,7 +143,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         override fun toString(): String {
             return "start ${start.floatToSecond()} \n" +
                     "end ${end.floatToSecond()} \n" +
-                    "image $centerBitmap"
+                    "image ${centerBitmap.toString()}"
         }
     }
 
@@ -546,15 +547,53 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         }
     }
 
-    fun addTimePart(timePart: TimePart): Boolean {
+    fun addTimePart(timePart: TimePart, withAnimation : Boolean = false): Boolean {
 
         if (checkAddPossible(timePart)) {
-            //Toast.makeText(context, "ADDED", Toast.LENGTH_SHORT).show()
-            logD("ADDED")
-            timePartList.add(timePart)
-            sortList()
-            invalidate()
-            timeTableListener?.onItemAdded(timePart)
+            if(withAnimation){
+                val timePartStart = timePart.start
+                val timePartEnd = timePart.end
+                val half  = timePartStart + ((timePartEnd - timePartStart) / 2)
+                val index = timePartList.size
+
+                timePart.start = half
+                timePart.end = half
+                timePartList.add(timePart)
+
+                val endMinHalf = timePartEnd - half
+                val hafMinStart = half - timePartStart
+
+                val animator = ValueAnimator.ofFloat(0.3f, 1f)
+                animator.addUpdateListener { animation ->
+                    val animatedValue = animation.animatedValue as Float
+                    val endVal = half + (animatedValue * endMinHalf)
+                    val startVal = half - (animatedValue * hafMinStart)
+                    timePartList[index].start = startVal
+                    timePartList[index].end = endVal
+                    invalidate()
+                }
+                animator.addListener(object : Animator.AnimatorListener{
+                    override fun onAnimationRepeat(animation: Animator?) {}
+
+                    override fun onAnimationCancel(animation: Animator?) {}
+
+                    override fun onAnimationStart(animation: Animator?) {}
+
+                    override fun onAnimationEnd(animation: Animator?) {
+                        timePartList[index].start = timePartStart
+                        timePartList[index].end = timePartEnd
+                        sortList()
+                        invalidate()
+                        timeTableListener?.onItemAdded(timePart)
+                    }
+                })
+                animator.start()
+            }else{
+                timePartList.add(timePart)
+                sortList()
+                invalidate()
+                timeTableListener?.onItemAdded(timePart)
+            }
             return true
         } else {
             logD("NOT_POSSIBLE_ADDTIMEPART")
@@ -583,7 +622,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         return isPossible
     }
 
-    fun addTimePartWithPosition(lengthFloat: Float, posX: Float, centerBitmap: Bitmap?, additionalInfo: Any?): Boolean {
+    fun addTimePartWithPosition(lengthFloat: Float, posX: Float, centerBitmap: Bitmap?, additionalInfo: Any?, withAnimation : Boolean = false): Boolean {
 
         val timePart = TimePart()
         timePart.start = currentPosition + posX.pixelToFloat() - (lengthFloat / 2)
@@ -591,18 +630,22 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
         timePart.centerBitmap = centerBitmap
         timePart.additionalInfo = additionalInfo
 
-        return addTimePart(timePart)
+        return addTimePart(timePart, withAnimation)
     }
 
-    fun forceToAddTimePart(minuteLength: Int, posX: Float, centerBitmap: Bitmap?, additionalInfo: Any?) {
+    fun forceToAddTimePart(minuteLength: Int, posX: Float, centerBitmap: Bitmap?, additionalInfo: Any?, withAnimation : Boolean = false) {
 
         var lengthFloat = minuteLength.minuteToFloat()
         if (lengthFloat < timePartMinFloat) lengthFloat = timePartMinFloat
         val timePart = TimePart()
         timePart.start = currentPosition + posX.pixelToFloat() - (lengthFloat / 2)
         timePart.end = timePart.start + lengthFloat
-        timePart.centerBitmap = centerBitmap
-        timePart.additionalInfo = additionalInfo
+        if(centerBitmap != null){
+            timePart.centerBitmap = centerBitmap
+        }
+        if(additionalInfo != null){
+            timePart.additionalInfo = additionalInfo
+        }
 
 
         if (timePart.start < 0.0) timePart.start = 0f
@@ -610,7 +653,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
 
         //logD("Original_ADD_PART ${formatTimeHHmm(timePart.start)}-${formatTimeHHmm(timePart.end)}")
-        if (addTimePart(timePart)) {
+        if (addTimePart(timePart, withAnimation)) {
             return
         } else {
             logD("NOT_POSSIBLE_1")
@@ -714,7 +757,7 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
 
 
         logD("Modified_ADD_PART ${formatTimeHHmm(timePart.start)}-${formatTimeHHmm(timePart.end)}")
-        addTimePart(timePart)
+        addTimePart(timePart, withAnimation)
     }
 
     private fun sortList() {
