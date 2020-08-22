@@ -274,8 +274,8 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        widthView = View.MeasureSpec.getSize(widthMeasureSpec)
-        heightView = View.MeasureSpec.getSize(heightMeasureSpec)
+        widthView = MeasureSpec.getSize(widthMeasureSpec)
+        heightView = MeasureSpec.getSize(heightMeasureSpec)
 
         setMeasuredDimension(widthView, heightView)
 
