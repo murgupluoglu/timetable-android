@@ -13,8 +13,8 @@
         android:layout_marginStart="16dp"
         android:layout_marginLeft="16dp"
         android:layout_marginTop="16dp"
-        android:textColor="#ffffff"
         android:text="Time Table:"
+        android:textColor="#ffffff"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -24,16 +24,16 @@
         android:layout_height="130dp"
         android:layout_marginTop="8dp"
         app:backgroundColor="#083E50"
+        app:currentTime="00:00"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView"
+        app:partColor="#8F2CFA"
         app:seperatorColor="#063443"
         app:seperatorTextColor="#ffffff"
         app:seperatorTextSize="9sp"
         app:seperatorTextTopMargin="20dp"
-        app:seperatorWidth="1dp"
-        app:partColor="#8F2CFA"
-        app:currentTime="00:00"/>
+        app:seperatorWidth="1dp" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"

@@ -15,10 +15,10 @@
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:background="@drawable/rounded_background_full"
-        tools:drawableStart="@drawable/ic_android_24dp"
         android:drawablePadding="2dp"
         android:gravity="center"
         android:padding="10dp"
-        tools:text="Hold And Drag Me"
-        android:textColor="#ffffff"/>
+        android:textColor="#ffffff"
+        tools:drawableStart="@drawable/ic_android_24dp"
+        tools:text="Hold And Drag Me" />
 </RelativeLayout>

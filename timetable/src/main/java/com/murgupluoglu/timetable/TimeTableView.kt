@@ -248,7 +248,6 @@ class TimeTableView @JvmOverloads constructor(context: Context, attrs: Attribute
     }
 
     private fun init(context: Context) {
-        Log.i("TimeTableView", "initialized version name ${BuildConfig.VERSION_NAME}")
 
         paint = Paint(Paint.ANTI_ALIAS_FLAG)
         paint.color = seperatorColor

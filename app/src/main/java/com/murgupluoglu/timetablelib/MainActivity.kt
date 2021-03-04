@@ -69,7 +69,7 @@ class MainActivity : AppCompatActivity() {
                             .into(object : SimpleTarget<Bitmap>(ConvertUtils.dp2px(24f), ConvertUtils.dp2px(24f)) {
                                 override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
                                     timeTable.timePartList.forEach {
-                                        if(it.additionalInfo!! as String == iconName){
+                                        if (it.additionalInfo!! as String == iconName) {
                                             it.centerBitmap = resource
                                         }
                                     }
@@ -80,7 +80,7 @@ class MainActivity : AppCompatActivity() {
                     val resId = resources.getIdentifier(iconName, "drawable", packageName)
                     val bitmap = getBitmapFromVectorDrawable(this@MainActivity, resId)
                     timeTable.timePartList.forEach {
-                        if(it.additionalInfo!! as String == iconName){
+                        if (it.additionalInfo!! as String == iconName) {
                             it.centerBitmap = bitmap
                         }
                     }

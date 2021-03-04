@@ -17,11 +17,12 @@ import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
 
 
-data class RecyclerViewItem(val iconName : String, val name : String)
-interface MyAdapterClickLister{
+data class RecyclerViewItem(val iconName: String, val name: String)
+interface MyAdapterClickLister {
     fun onClicked(position: Int, textView: TextView)
 }
-class MyAdapter(private val myDataset: ArrayList<RecyclerViewItem>, val myAdapterClickListener : MyAdapterClickLister) : RecyclerView.Adapter<MyAdapter.MyViewHolder>() {
+
+class MyAdapter(private val myDataset: ArrayList<RecyclerViewItem>, val myAdapterClickListener: MyAdapterClickLister) : RecyclerView.Adapter<MyAdapter.MyViewHolder>() {
 
     inner class MyViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         var nameTextView: TextView = view.findViewById<View>(R.id.nameTextView) as TextView
@@ -46,7 +47,7 @@ class MyAdapter(private val myDataset: ArrayList<RecyclerViewItem>, val myAdapte
 
         val context = holder.itemView.context
 
-        if(URLUtil.isValidUrl(item.iconName)){
+        if (URLUtil.isValidUrl(item.iconName)) {
             Glide.with(context)
                     .asBitmap()
                     .load(item.iconName)
@@ -57,7 +58,7 @@ class MyAdapter(private val myDataset: ArrayList<RecyclerViewItem>, val myAdapte
                             holder.nameTextView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null)
                         }
                     })
-        }else{
+        } else {
             val resId = context.resources.getIdentifier(item.iconName, "drawable", context.packageName)
             val drawable = ContextCompat.getDrawable(context, resId)!!
             holder.nameTextView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null)
